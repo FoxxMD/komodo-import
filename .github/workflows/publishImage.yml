@@ -10,14 +10,13 @@ on:
   workflow_dispatch:
   push:
     branches:
-      - 'master'
+      - 'main'
     tags:
       - '*.*.*'
     # don't trigger if just updating docs
     paths-ignore:
       - 'README.md'
       - '.github/**'
-      - 'flatpak/**'
   # use release instead of tags once version is correctly parsed
   # https://github.com/docker/metadata-action/issues/422
   # https://github.com/docker/metadata-action/issues/240

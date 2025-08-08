@@ -7,7 +7,7 @@ on:
       - reopened
       - opened
     branches:
-      - 'master'
+      - 'main'
 
 jobs:
   test:
