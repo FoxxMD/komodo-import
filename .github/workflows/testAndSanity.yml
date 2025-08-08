@@ -29,7 +29,7 @@ jobs:
           cache: 'npm'
 
       - name: Install dev dependencies
-        run: npm run install
+        run: npm install
 
       - name: Test Backend
         run: npm run test
