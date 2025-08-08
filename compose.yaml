@@ -10,7 +10,7 @@ services:
     environment:
       - TZ=America/New_York
       ## Komodo Server name to use for generated Stacks
-      - SERVER_NAME=foxx-arch
+      - SERVER_NAME=my-cool-server
       ## ParentDirectory on the host use as Stack Run Directory prefix
       - HOST_PARENT_PATH=/my/cool/path
 
