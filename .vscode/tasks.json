@@ -1,0 +1,37 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"type": "typescript",
+			"tsconfig": "src/backend/tsconfig.json",
+			"problemMatcher": [
+				"$tsc"
+			],
+			"group": {
+				"kind": "build",
+				"isDefault": true
+			},
+			"label": "tsc: build - src/backend/tsconfig.json"
+		},
+		{
+			"type": "shell",
+			"label": "compose-up-dev",
+			"command": "docker-compose -f compose.dev.yml up",
+			"presentation": {
+			  "reveal": "always",
+			  "panel": "new"
+			},
+			"problemMatcher": []
+		  },
+		  {
+			"type": "shell",
+			"label": "compose-build-dev",
+			"command": "docker-compose -f compose.dev.yml build",
+			"presentation": {
+				"reveal": "always",
+				"panel": "new"
+			  },
+			  "problemMatcher": []
+		  }
+	]
+}

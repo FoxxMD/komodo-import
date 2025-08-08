@@ -1,0 +1,11 @@
+services:
+  komodo-import:
+    build:
+      context: .
+    env_file:
+      - path: ./.env
+        required: false
+    volumes:
+      ## ParentDirectory:FILES_ON_SERVER_DIR
+      - ./tests/exampleDir:/filesOnServer
+    restart: no

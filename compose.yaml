@@ -1,0 +1,30 @@
+services:
+  komodo-import:
+    image: foxxmd/komodo-import:latest
+    volumes:
+      ## ParentDirectory:FILES_ON_SERVER_DIR
+      - ./myprojects:/filesOnServer
+      
+      ## optional, TOML is saved to file here
+      #- ./config:/config
+    environment:
+      - TZ=America/New_York
+      ## Komodo Server name to use for generated Stacks
+      - SERVER_NAME=foxx-arch
+      ## ParentDirectory on the host use as Stack Run Directory prefix
+      - HOST_PARENT_PATH=/my/cool/path
+
+      ## optional
+      #- FILES_ON_SERVER_DIR=/filesOnServer
+      #- IMAGE_REGISTRY_PROVIDER=
+      #- IMAGE_REGISTRY_ACCOUNT=
+      #- AUTO_UPDATE=false
+      #- POLL_FOR_UPDATE=false
+      #- KOMODO_ENV_NAME=
+      #- COMPOSE_FILE_GLOB=
+      #- ENV_FILE_GLOB=
+
+      ## use if using /config for saving TOML
+      #- PUID=1000
+      #- PGID=1000
+    restart: no

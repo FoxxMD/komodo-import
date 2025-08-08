@@ -1,0 +1,77 @@
+{
+  "name": "@foxxmd/komodo-import",
+  "version": "0.1.0",
+  "description": "",
+  "type": "module",
+  "main": "src/index.ts",
+  "scripts": {
+    "test": "mocha --reporter spec",
+    "build:backend": "tsc -p src",
+    "dev": "nodemon -w src -x tsx src/index.ts",
+    "start": "NODE_ENV=production tsx src/index.ts"
+  },
+  "engines": {
+    "node": ">=18.19.1",
+    "npm": ">=10.2.4"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/FoxxMD/komodo-import.git"
+  },
+  "author": "FoxxMD",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/FoxxMD/komodo-import/issues"
+  },
+  "homepage": "https://github.com/FoxxMD/komodo-import#readme",
+  "dependencies": {
+    "@foxxmd/get-version": "^0.0.3",
+    "@foxxmd/logging": "^0.2.2",
+    "clone": "^2.1.2",
+    "common-tags": "^1.8.2",
+    "dayjs": "^1.11.10",
+    "deepmerge": "^4.3.1",
+    "dotenv": "^10.0.0",
+    "glob": "^11.0.3",
+    "komodo_client": "^1.18.4",
+    "object-hash": "^3.0.0",
+    "p-event": "^6.0.0",
+    "pony-cause": "^2.1.10",
+    "smol-toml": "^1.4.1",
+    "split2": "^4.2.0",
+    "tsx": "^4.7.0",
+    "yaml": "^2.3.4"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.17.0",
+    "@faker-js/faker": "^8.4.1",
+    "@types/chai": "^4.3.11",
+    "@types/chai-as-promised": "^7.1.8",
+    "@types/clone": "^2.1.4",
+    "@types/common-tags": "^1.8.1",
+    "@types/mocha": "^10.0.6",
+    "@types/node": "^20.11.17",
+    "@types/object-hash": "^3.0.0",
+    "@types/sinon": "^17.0.3",
+    "@types/sinon-chai": "^3.2.12",
+    "chai": "^4.4.1",
+    "chai-as-promised": "^7.1.1",
+    "eslint": "^9.17.0",
+    "eslint-plugin-prefer-arrow-functions": "^3.6.2",
+    "mocha": "^10.3.0",
+    "nodemon": "^3.0.3",
+    "sinon": "^17.0.1",
+    "sinon-chai": "^3.7.0",
+    "ts-essentials": "^9.4.1",
+    "typescript": "5.5.4",
+    "typescript-eslint": "^8.39.0",
+    "with-local-tmp-dir": "^5.1.1"
+  },
+  "overrides": {
+    "with-local-tmp-dir": {
+      "tmp-promise": {
+        "tmp": "0.2.1"
+      }
+    }
+  }
+}

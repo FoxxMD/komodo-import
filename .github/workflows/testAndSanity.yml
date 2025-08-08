@@ -1,0 +1,35 @@
+name: Tests and Sanity Run
+
+on:
+  workflow_call:
+    inputs:
+      node-version:
+        description: "Node version"
+        required: false
+        default: '20.x'
+        type: string
+      ref:
+        description: "Ref to checkout"
+        required: false
+        type: string
+
+jobs:
+  test:
+    name: Tests / Build / Sanity Run
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out the repo
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.ref }}
+      - name: Use Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ inputs.node-version }}
+          cache: 'npm'
+
+      - name: Install dev dependencies
+        run: npm run install
+
+      - name: Test Backend
+        run: npm run test

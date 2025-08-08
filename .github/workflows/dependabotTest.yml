@@ -1,0 +1,16 @@
+name: Test Dependabot PR
+
+on:
+  pull_request_target:
+    types:
+      - synchronize
+      - reopened
+      - opened
+    branches:
+      - 'master'
+
+jobs:
+  test:
+    name: Tests / Build / Sanity Run
+    if: github.actor == 'dependabot[bot]'
+    uses: ./.github/workflows/testAndSanity.yml

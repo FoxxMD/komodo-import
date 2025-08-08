@@ -1,0 +1,7 @@
+{
+  "reporter": "dot",
+  "extension": "ts",
+  "import": "tsx/esm",
+  "spec": "./tests/**/*.test.ts",
+  "exit": true
+}
