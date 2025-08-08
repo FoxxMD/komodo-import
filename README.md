@@ -1,4 +1,4 @@
-# komodo-import
+# komodo-import <!-- omit from toc -->
 
 [![Latest Release](https://img.shields.io/github/v/release/foxxmd/komodo-import)](https://github.com/FoxxMD/komodo-import/releases)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
@@ -7,6 +7,19 @@
 Generate TOML [Sync Resources](https://komo.do/docs/sync-resources) for [Komodo](https://komo.do) from your existing Docker Compose projects. The missing import tool for onboarding to Komodo!
 
 **🚧 VERY alpha development!**
+
+- [Overview](#overview)
+- [Usage](#usage)
+  - [Generate "Files On Server" Stacks](#generate-files-on-server-stacks)
+  - [File Pattern Behavior](#file-pattern-behavior)
+- [Using Sync Resources](#using-sync-resources)
+  - [Generate TOML](#generate-toml)
+  - [Create Sync Resource](#create-sync-resource)
+  - [Verify Sync Changes](#verify-sync-changes)
+  - [Execute Sync](#execute-sync)
+  - [Remove Sync (Optional)](#remove-sync-optional)
+- [Example/Demo](#exampledemo)
+- [Writing Generated TOML to File](#writing-generated-toml-to-file)
 
 ## Overview
 
@@ -28,6 +41,8 @@ Current functionality:
 Use the example [`compose.yaml`](./compose.yaml) stack to configure and run Komodo Import. **All configuration is done using Environmental Variables.**
 
 Refer to the below "Generate ..." sections to see how to configure Komodo Import to genrate specific types of Stacks.
+
+**See the [Example Demo](#exampledemo) for a concrete example of configuring and using Komodo Import.**
 
 ### Generate "Files On Server" Stacks
 
@@ -235,7 +250,7 @@ after running Komodo Import to get output without the service name prefix, makes
 
 </details>
 
-### Writing Generated TOML to File
+## Writing Generated TOML to File
 
 Komodo Import will additionally attempt to write the generated output to a `.toml` file in the `/config` folder within it's container.
 
