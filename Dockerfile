@@ -10,9 +10,7 @@ ENV TZ=Etc/GMT \
     COLORED_STD=true \
     FILES_ON_SERVER_DIR=/filesOnServer
 
-FROM base as app
-
-USER 1000
+FROM base as builder
 
 WORKDIR /usr/src/app
 
@@ -22,5 +20,13 @@ RUN npm install --omit=dev \
     && npm cache clean --force \
     && chown -R node:node node_modules \
     && rm -rf node_modules/@types
+
+FROM base as app
+
+USER 1000
+
+WORKDIR /usr/src/app
+
+COPY --chown=node:node --from=builder /usr/src/app /usr/src/app
 
 CMD ["dumb-init", "node", "/usr/src/app/node_modules/.bin/tsx", "/usr/src/app/src/index.ts"]

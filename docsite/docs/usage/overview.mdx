@@ -1,0 +1,230 @@
+---
+sidebar_position: 2
+title: Overview
+toc_max_heading_level: 4
+---
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+import CodeBlock from '@theme/CodeBlock';
+import AIOExample from "../../src/components/AIOExample";
+import FileExample from "../../src/components/FileExample";
+
+## Key Concepts
+
+There are three parts to using Komodo Import (KI). **Which Inputs, Configuration, and Outputs are used are all defined using environmental variables.**
+
+### Inputs
+
+This is what KI reads to generate [Komodo Resources](https://komo.do/docs/resources). These are existing, docker-related resources on an individual machine such as 
+
+* [Docker Compose projects](https://docs.docker.com/compose/how-tos/project-name/) (`compose.yaml`)
+* Docker containers
+
+### Configuration
+
+These are **environmental variables** supplied to KI to:
+
+* set defaults for Komodo Resources (image registry, auto update, etc.)
+* define required fields for Komodo Resources (Server Name, Run Directory, etc.)
+* define settings for how KI to interacts with Komodo (API Key, existing Resource behavior, etc.)
+* define what [Outputs](#outputs) KI uses (log to file, export to Komodo, etc.)
+
+### Outputs
+
+These are where and how KI puts the Resources created from [Inputs](#inputs):
+
+* Log to output (docker logs, node console)
+* Log to file
+* Export to Komodo API (create Resource Sync, etc.)
+
+## Inputs
+
+### Stacks
+
+KI can create Komodo [Stack](https://komo.do/docs/resources#stack) Resources from existing resources on your machine.
+
+#### Files On Server
+
+Use existing [Docker Compose projects](https://docs.docker.com/compose/how-tos/project-name/) (`compose.yaml`) as [**Files On Server**](#files-on-server) mode Komodo Stacks.
+
+KI will generate multiple Stacks from all folders within the given folder. This is similar to how [dockge](https://github.com/louislam/dockge) works.
+
+<details>
+
+<summary>Example</summary>
+
+If your folder structure looks like this
+
+```
+.
+└── /home/myUser/homelab/
+    ├── immich/
+    │   └── compose.yaml
+    ├── plex/
+    │   └── docker-compose.yaml
+    └── uptime-kuma/
+        └── compose.yaml
+```
+
+and you use `/home/myUser/homelab/` with KI then it will output stacks for
+
+* immich
+* plex
+* uptime-kuma
+
+</details>
+
+:::note
+    This method does not yet support **git-based** Stacks. Any git-based projects will only be detected as Files On Server.
+:::
+
+###### Project Files Detection {#project-file-detection}
+
+Komodo Import makes some reasonable assumptions about which `compose.yaml` and `.env` files you want to use within each project's folder. These can be overriden using the `*_GLOB` environmental varibales from the [Configuration](#fos-config) below.
+
+<details>
+
+<summary>File Detection and Behavior Details</summary>
+
+* Compose Files
+  * Default pattern
+    * Looks for `compose.y(a)ml` and `docker-compose.y(a)ml` 
+    * Files may have interim names like `compose.dev.yaml`
+    * Can be overridden with `COMPOSE_FILE_GLOB` env
+  * Will prioritize `compose.yaml` over `docker-compose.yaml`
+  * Will choose the file with the shortest path EX
+    * Prioritizes `./compose.yaml` over `./aFolder/compose.yaml`
+* .env Files
+  * Default pattern 
+    * Adds all `.env` files found at top-level or sub-folders
+    * Can be overridden with `ENV_FILE_GLOB` env
+  * If a `.env` file is found then configures Komodo to write it's own Environment section to `.komodoenv` instead of `.env`
+    * Komodo env name can be overridden with `KOMODO_ENV_NAME`
+
+Komodo Import will **log** which files it detects and indicate which ones it will use for each project. These can be manually modified in the generated TOML, [API Sync Resource](#api-sync), or after creating the Stack in Komodo.
+
+</details>
+
+##### Configuration {#fos-config}
+
+<details>
+
+<summary>Environmental Variables</summary>
+
+| ENV                       | Required | Default      | Description                                                                                                                                                |
+| :------------------------ | :------- | ------------ | :--------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `SERVER_NAME`             | ☑️     |              | The name of the Komodo [Server](https://komo.do/docs/resources#server) where a Stack is located                                                            |
+| `HOST_PARENT_PATH`        | ☑️     |              | The parent directory on the **host** where stack folders are located. Used for generating Stack Run Directory                                              |
+| `COMPOSE_FILE_GLOB`       | -        |              | A [glob](https://github.com/isaacs/node-glob?tab=readme-ov-file#glob-primer) pattern to use for finding files for **Files Paths** in Stack config          |
+| `ENV_FILE_GLOB`           | -        |              | A [glob](https://github.com/isaacs/node-glob?tab=readme-ov-file#glob-primer) pattern to use for finding files for **Additional Env Files** in Stack config |
+| `KOMODO_ENV_NAME`         | -        | `.komodoenv` | If existing .env files are found then this name will be used for the .env that Komodo writes using its own Environment section                             |
+| `IMAGE_REGISTRY_PROVIDER` | -        |              | Name of Image Registry to use                                                                                                                              |
+| `IMAGE_REGISTRY_ACCOUNT`  | -        |              | Image Registry account to use                                                                                                                              |
+| `POLL_FOR_UPDATE`         | -        | false        | Poll for newer images?                                                                                                                                     |
+| `AUTO_UPDATE`             | -        | false        | Auto Update stack?                                                                                                                                         |
+
+</details>
+
+For [docker](../../installation#docker) usage the folder with your projects should be mounted to `/filesOnServer` in the container.
+
+#### Git-Based
+
+Coming soon!
+
+## Outputs
+
+### Console
+
+KI will always output the raw TOML form of a [Sync Resource](https://komo.do/docs/sync-resources) to console unless the env `LOG_TOML=false`.
+
+You'll see this in docker logs or node's console like this:
+
+```
+[2025-08-11 14:06:19.119 -0400] INFO   : [App] Copy the text between the scissors to use as the *Resource File* contents within your Resource Sync
+
+✂️  ✂️  ✂️  ✂️  ✂️  ✂️  ✂️  ✂️  ✂️  ✂️  ✂️  ✂️
+[[stack]]
+name = "compose"
+
+[stack.config]
+server = "my-cool-server"
+run_directory = "/home/myUser/homelab/compose"
+
+...
+
+✂️  ✂️  ✂️  ✂️  ✂️  ✂️  ✂️  ✂️  ✂️  ✂️  ✂️  ✂️
+[2025-08-11 14:06:19.119 -0400] INFO   : [App] Done!
+```
+
+Use this with [manually creating Sync Resources](../resourceSync#create-sync-resource)
+
+:::tip
+Use `--no-log-prefix` to get output without the service name prefix, makes getting clear TOML output easier.
+
+```
+docker compose up --no-log-prefix
+```
+:::
+
+### API Sync
+
+Komodo Import can **directly create Sync Resources in Komodo** using Komodo's API. **This output will only create the Sync, it will not execute it.** After creating the Sync you should [verify its content before executing.](../resourceSync#verify-sync-changes)
+
+You will need to create an API Key and Secret to use the API.
+
+<details>
+
+<summary>API Key Creation Instructions</summary>
+
+Navigate to your Komodo Web UI:
+
+* Open **Settings** -> **Profile**
+* Click **New Api Key**
+  * Give it a name and optional Expiry
+  * Create the key and Copy the show **Key** and **Secret**
+
+Currently, the user creating the Api Key must be an **Admin** to create Sync Resources (but this will hopefully be more granular in the future).
+
+</details>
+
+Add these environmental variables to Komodo Import:
+
+<details>
+
+<summary>Environmental Variables</summary>
+
+| ENV             | Required | Default       | Description                                                              |
+| :-------------- | :------- | ------------- | :----------------------------------------------------------------------- |
+| `KOMODO_URL`    | ☑️     |               | Komodo Server URL for use with creating/modifying Resource Sync directly |
+| `API_KEY`       | ☑️     |               | Komodo API Key                                                           |
+| `API_SECRET`    | ☑️     |               | Komodo API Secret                                                        |
+| `EXISTING_SYNC` | -        | append        | Behavior if Resource Sync already exists. Either `append` or `overwrite` |
+| `SYNC_NAME`     | -        | komodo-import | Name of Sync to create/modify                                            |
+
+</details>
+
+### File
+
+Komodo Import will attempt to write the generated output to a `.toml` file if the ENV `OUTPUT_DIR` is present. This should be the *directory* (not file) that the generated file should be written to.
+
+Bind mount a folder into the container and set `OUTPUT_DIR` like in the example below:
+
+<details>
+
+<summary>File Output Example</summary>
+
+```yaml
+services:
+  komodo-import:
+  # ...
+    environment:
+      # ...
+      - OUTPUT_DIR=/output
+    volumes:
+      # ...
+      - /my/host/folder:/output
+```
+
+</details>
+
+Use this with [manually creating Sync Resources](../resourceSync#create-sync-resource)

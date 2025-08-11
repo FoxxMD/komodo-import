@@ -1,0 +1,54 @@
+---
+sidebar_position: 3
+title: Using Sync Resources
+toc_max_heading_level: 4
+---
+
+## What is a Sync Resource?
+
+A [**Sync Resource**](https://komo.do/docs/sync-resources) is a text/file containing [TOML](https://toml.io/en/) that represents one or more Komodo [Resources](https://komo.do/docs/resources).
+
+Komodo can use a Sync Resource to
+
+* **Execute** from the Sync, creating/modifying/deleting Resources in Komodo **so that it matches what is declared in the Sync TOML**
+* **Commit** to the Sync, generating a representation of what is **currently in Komodo** and writing out to the Sync TOML contents
+
+## How To Use with Komodo Import?
+
+Komodo Import gives you the TOML representation of Resources not yet in Komodo. You can use this to bulk "create" Resources that connect to your existing compose projects, container, etc, by **Executing** a Sync Resource created with Komodo Import.
+
+:::tip
+**If you are copy-pasting [console Output](../overview#console) or [file Output](../overview#file)** then proceed to [Create Sync Resource](#create-sync-resource) to **manually** create a Sync Resource from the TOML Komodo Import generated for you.
+:::
+
+:::tip
+**If you used [API Output](../overview#api-sync)** then find the Sync Resource KI made for you and skip to [Verify Sync Changes](#verify-sync-changes).
+:::
+
+### Create Sync Resource
+
+* In your Komodo dashboard navigiate to **Syncs** -> **New Resource Sync**
+* Create a Sync with whatever name you want
+* In the Sync details page **Choose Mode** -> **UI Defined**
+* ⚠️ Disable **Delete Unmatched Resources** ⚠️
+  * If this is **not** disabled you may delete all other Resources in Komodo! Double check this!
+* Add the Komodo Import TOML to **Resoure Files** section
+* **Save**
+
+### Verify Sync Changes
+
+Your Sync should now be in a **Pending** state (check the top header). If it's not click the **Refresh** button to update.
+
+Switching to the **Pending** tab now shows all of the actions Komodo will take to make it **match what is in the generated TOML.** This should generally *only* be "Update Stack" or "Create Stack" actions.
+
+Verify that all of the actions are what you desire. If something is missing it can be updated by modifying the contents in **Resoure Files** in the **Config** tab.
+
+### Execute Sync
+
+Click the **Execute Sync** button to perform **all** the actions under **Pending**. Alternatively, use the **Execute Change** button next to each individual Action.
+
+### Remove Sync (Optional)
+
+After Syncing is done you can safely **Delete** the Sync you created for use with Komodo Import.
+
+You may now want to create a proper [bi-directional, git-backed Sync](https://blog.foxxmd.dev/posts/migrating-to-komodo/#resource-sync) so your entire Komodo configuration is backed up and restorable.
