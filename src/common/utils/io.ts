@@ -105,7 +105,10 @@ export const sortComposePaths = (p: string[]): string[] => {
 
 export const readDirectories = async (path: string): Promise<string[]> => {
     try {
-        return await promises.readdir(path);
+        const directories = (await promises.readdir(path, { withFileTypes: true }))
+            .filter(dirent => dirent.isDirectory())
+            .map(dir => dir.name);
+        return directories;
     } catch (e) {
         throw new Error(`Could not read folders at dir ${path}`);
     }
