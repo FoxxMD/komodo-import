@@ -15,9 +15,9 @@ import { TomlStack } from './common/infrastructure/tomlObjects.js';
 import { buildFileStack, buildFileStacks } from './builders/stack/filesOnServer.js';
 import { CommonImportOptions } from './common/infrastructure/config/common.js';
 import { FilesOnServerConfig } from './common/infrastructure/config/filesOnServer.js';
-import { KomodoClient, Types } from "komodo_client";
 import { exportToLog } from './exporters/exportToLog.js';
 import { exportToFile } from './exporters/exportToFile.js';
+import { exportToSync } from './exporters/exportToApiSync.js';
 
 dayjs.extend(utc)
 dayjs.extend(timezone);
@@ -127,6 +127,7 @@ try {
 
     exportToLog(toml, logger);
     await exportToFile(toml, logger);
+    await exportToSync(toml, logger);
 
     logger.info('Done!');
 

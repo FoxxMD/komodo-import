@@ -17,7 +17,8 @@
 			"extensions": [
 				"hbenl.vscode-mocha-test-adapter",
 				"dbaeumer.vscode-eslint",
-				"tamasfe.even-better-toml"
+				"tamasfe.even-better-toml",
+				"TakumiI.markdowntable"
 			]
 		}
 	}

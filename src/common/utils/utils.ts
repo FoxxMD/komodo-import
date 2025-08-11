@@ -39,3 +39,13 @@ export const removeUndefinedKeys = <T extends Record<string, any>>(obj: T): T | 
     //Object.keys(newObj).forEach(key => newObj[key] === undefined || newObj[key] && delete newObj[key])
     return newObj;
 }
+
+export const isUndefinedOrEmptyString = (val: undefined | string): boolean => {
+    if(val === undefined) {
+        return true;
+    }
+    if(val.trim() === '') {
+        return true;
+    }
+    return false;
+}

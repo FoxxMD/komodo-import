@@ -23,18 +23,21 @@ Generate TOML [Sync Resources](https://komo.do/docs/sync-resources) for [Komodo]
 
 ## Overview
 
-Komodo Import is a small docker container that takes some user-provided configuration, reads **existing** folder structures on your machine, and generates TOML [Sync Resources](https://komo.do/docs/sync-resources) to use with Komodo.
+Komodo Import is a small docker container that takes some user-provided configuration, reads **existing** folder structures on your machine, and generates [Sync Resources](https://komo.do/docs/sync-resources) to use with Komodo.
 
 Current functionality:
 
 * [x] Generate TOML
    * [x] To Docker Logs
    * [x] To File
-* [ ] Generate Toml For...
+* [x] Generate Toml For...
   * [x] Stack
      * [x] "Files On Server" Stack types   
      * [ ] Git Repo
-* [ ]  Import directly with Komodo API
+* [x]  Import directly with Komodo API
+  * [x] Create/modify Resource Sync  
+  * [ ] Create/modify Stacks
+  * [ ] Create/modify Deployments
   
 ## Usage
 
@@ -54,17 +57,23 @@ If you are using plain, non git-based folders containing `*compose.yaml`  style 
 
 
 
-|            ENV            |   Required    | Default |                                                                        Description                                                                         |
-|---------------------------|---------------|---------|------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `SERVER_NAME`             | ☑️            |         | The name of the Komodo [Server](https://komo.do/docs/resources#server) where a Stack is located                                                            |
-| `HOST_PARENT_PATH`        | ☑️            |         | The parent directory on the **host** where stack folders are located. Used for generating Stack Run Directory                                              |
-| `COMPOSE_FILE_GLOB`       | -             |         | A [glob](https://github.com/isaacs/node-glob?tab=readme-ov-file#glob-primer) pattern to use for finding files for **Files Paths** in Stack config          |
-| `ENV_FILE_GLOB`           | -             |         | A [glob](https://github.com/isaacs/node-glob?tab=readme-ov-file#glob-primer) pattern to use for finding files for **Additional Env Files** in Stack config |
-| `KOMODO_ENV_NAME`         | `.komodoenv`  |         | If existing .env files are found then this name will be used for the .env that Komodo writes using its own Environment section                             |
-| `IMAGE_REGISTRY_PROVIDER` | -             |         | Name of Image Registry to use                                                                                                                              |
-| `IMAGE_REGISTRY_ACCOUNT`  | -             |         | Image Registry account to use                                                                                                                              |
-| `POLL_FOR_UPDATE`         | -             | false   | Poll for newer images?                                                                                                                                     |
-| `AUTO_UPDATE`             | -             | false   | Auto Update stack?                                                                                                                                         
+| ENV                       | Required     | Default       | Description                                                                                                                                                |
+| :------------------------ | ------------ | ------------- | :--------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `SERVER_NAME`             | ☑️         |               | The name of the Komodo [Server](https://komo.do/docs/resources#server) where a Stack is located                                                            |
+| `HOST_PARENT_PATH`        | ☑️         |               | The parent directory on the **host** where stack folders are located. Used for generating Stack Run Directory                                              |
+| `COMPOSE_FILE_GLOB`       | -            |               | A [glob](https://github.com/isaacs/node-glob?tab=readme-ov-file#glob-primer) pattern to use for finding files for **Files Paths** in Stack config          |
+| `ENV_FILE_GLOB`           | -            |               | A [glob](https://github.com/isaacs/node-glob?tab=readme-ov-file#glob-primer) pattern to use for finding files for **Additional Env Files** in Stack config |
+| `KOMODO_ENV_NAME`         | `.komodoenv` |               | If existing .env files are found then this name will be used for the .env that Komodo writes using its own Environment section                             |
+| `IMAGE_REGISTRY_PROVIDER` | -            |               | Name of Image Registry to use                                                                                                                              |
+| `IMAGE_REGISTRY_ACCOUNT`  | -            |               | Image Registry account to use                                                                                                                              |
+| `POLL_FOR_UPDATE`         | -            | false         | Poll for newer images?                                                                                                                                     |
+| `AUTO_UPDATE`             | -            | false         | Auto Update stack?                                                                                                                                         |
+| `KOMODO_URL`              | -            |               | Komodo Server URL for use with creating/modifying Resource Sync directly                                                                                   |
+| `API_KEY`                 | -            |               | Komodo API Key                                                                                                                                             |
+| `API_SECRET`              | -            |               | Komodo API Secret                                                                                                                                          |
+| `EXISTING_SYNC`           | -            | append        | Behavior if Resource Sync already exists. One of `append` or `overwrite`                                                                                   |
+| `SYNC_NAME`               | -            | komodo-import | Name of Sync to create/modify                                                                                                                              |
+
 
 </details>
 
