@@ -188,7 +188,7 @@ jobs:
             type=edge
 
             # push with branch name as tag if not master/main
-            type=ref,event=branch,enable=${{ !endsWith(github.ref, 'master') }}
+            type=ref,event=branch,enable=${{ !endsWith(github.ref, 'main') }}
             
             # tag non-prelease as latest -- has a higher priority than regular tag so it shows first in registries
             type=match,pattern=\d.\d.\d$,priority=901
