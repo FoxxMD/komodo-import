@@ -1,38 +1,26 @@
-FROM lsiobase/alpine:3.22 as base
+FROM node:22-alpine as base
 
-ENV TZ=Etc/GMT
-
-RUN \
-  echo "**** install build packages ****" && \
-  apk add --no-cache \
-    git \
-    nodejs \
-    npm && \
-  echo "**** cleanup ****" && \
-  rm -rf \
-    /root/.cache \
-    /tmp/*
+RUN apk add --no-cache dumb-init
 
 RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 
-ARG config=/config
-VOLUME $config
-ENV CONFIG_DIR=$config
-
-COPY docker/root/ /
-
-WORKDIR /app
+ENV TZ=Etc/GMT \
+    NODE_ENV="production" \
+    IS_DOCKER=true \
+    COLORED_STD=true \
+    FILES_ON_SERVER_DIR=/filesOnServer
 
 FROM base as app
 
-COPY --chown=abc:abc . /app
+USER 1000
 
-ENV NODE_ENV="production"
-ENV IS_DOCKER=true
-ENV FILES_ON_SERVER_DIR=/filesOnServer
-ENV COLORED_STD=true
+WORKDIR /usr/src/app
+
+COPY --chown=node:node . /usr/src/app
 
 RUN npm install --omit=dev \
     && npm cache clean --force \
-    && chown -R abc:abc node_modules \
+    && chown -R node:node node_modules \
     && rm -rf node_modules/@types
+
+CMD ["dumb-init", "node", "/usr/src/app/node_modules/.bin/tsx", "/usr/src/app/src/index.ts"]
