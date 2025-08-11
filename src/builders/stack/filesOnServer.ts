@@ -5,11 +5,13 @@ import { parse, ParsedPath, sep, join } from 'path';
 import { TomlStack } from "../../common/infrastructure/tomlObjects.js";
 import { findFilesRecurive, sortComposePaths } from "../../common/utils/io.js";
 import { stripIndents } from "common-tags";
-import { isDebugMode } from "../../common/utils/utils.js";
+import { isDebugMode, removeUndefinedKeys } from "../../common/utils/utils.js";
 
 const DEFAULT_COMPOSE_GLOB = '**/{compose,docker-compose}*.y?(a)ml';
 
-export const buildFileStack = async (path: string, options: FilesOnServerConfig & { logger: Logger }): Promise<TomlStack> => {
+export type BuildFileStackOptions = FilesOnServerConfig & { logger: Logger };
+
+export const buildFileStack = async (path: string, options: BuildFileStackOptions): Promise<TomlStack> => {
 
     const {
         composeFileGlob = DEFAULT_COMPOSE_GLOB,
@@ -76,7 +78,7 @@ export const buildFileStack = async (path: string, options: FilesOnServerConfig 
 
         logger.info('Stack config complete');
 
-        return stack;
+        return removeUndefinedKeys(stack);
     } catch (e) {
         logJson = true;
         throw new Error(`Error occurred while processing Stack for folder ${pathInfo.name}`, {cause: e});
