@@ -156,47 +156,66 @@ services:
 ```
 
 ```shell
-$ docker compose up
-app is starting!
-[2025-08-08 13:47:17.462 -0400] VERBOSE: [Init] Config Dir ENV: /config -> Resolved: /config
-[2025-08-08 13:47:17.465 -0400] INFO   : [Init] Debug Mode: NO
-[2025-08-08 13:47:17.476 -0400] INFO   : [App] Version: 0.1.0
-[2025-08-08 13:47:17.477 -0400] INFO   : [App] Files On Server Dir ENV: /filesOnServer -> Resolved: /filesOnServer
-[2025-08-08 13:47:17.479 -0400] INFO   : [App] [uptime_kuma] Found Stack 'uptime_kuma' at dir /filesOnServer/uptime_kuma
-[2025-08-08 13:47:17.485 -0400] INFO   : [App] [uptime_kuma] Found 1 files matching compose pattern **/{compose,docker-compose}*.y?(a)ml:
-compose.yaml
-[2025-08-08 13:47:17.486 -0400] INFO   : [App] [uptime_kuma] Stack config complete
-[2025-08-08 13:47:17.487 -0400] INFO   : [App] [immich] Found Stack 'immich' at dir /filesOnServer/immich
-[2025-08-08 13:47:17.488 -0400] INFO   : [App] [immich] Found 1 files matching compose pattern **/{compose,docker-compose}*.y?(a)ml:
+$ docker compose up --no-log-prefix
+[2025-08-11 14:06:19.080 -0400] INFO   : [Init] Debug Mode: NO
+[2025-08-11 14:06:19.094 -0400] INFO   : [App] Version: 0.1.0
+[2025-08-11 14:06:19.095 -0400] INFO   : [App] Files On Server Dir ENV: /filesOnServer -> Resolved: /filesOnServer
+[2025-08-11 14:06:19.096 -0400] INFO   : [App] [Files On Server] Processing Stacks for 6 folders:
+/filesOnServer/compose.yaml
+/filesOnServer/immich
+/filesOnServer/jellyfin
+/filesOnServer/octoprint
+/filesOnServer/plex
+/filesOnServer/uptime-kuma
+[2025-08-11 14:06:19.096 -0400] INFO   : [App] [Files On Server] Compose File Glob: **/{compose,docker-compose}*.y?(a)ml
+[2025-08-11 14:06:19.097 -0400] INFO   : [App] [Files On Server] Env Glob: **/.env
+[2025-08-11 14:06:19.097 -0400] INFO   : [App] [Files On Server] [compose] Found Stack 'compose' at dir /filesOnServer/compose.yaml
+[2025-08-11 14:06:19.103 -0400] WARN   : [App] [Files On Server] [compose] Did not find any files patterns matching compose glob
+[2025-08-11 14:06:19.103 -0400] INFO   : [App] [Files On Server] [compose] Stack config complete
+[2025-08-11 14:06:19.104 -0400] INFO   : [App] [Files On Server] [immich] Found Stack 'immich' at dir /filesOnServer/immich
+[2025-08-11 14:06:19.107 -0400] INFO   : [App] [Files On Server] [immich] Found 1 files matching compose glob:
 docker/docker-compose.yaml
-[2025-08-08 13:47:17.489 -0400] INFO   : [App] [immich] Stack config complete
-[2025-08-08 13:47:17.489 -0400] INFO   : [App] [plex] Found Stack 'plex' at dir /filesOnServer/plex
-[2025-08-08 13:47:17.490 -0400] INFO   : [App] [plex] Found 1 files matching compose pattern **/{compose,docker-compose}*.y?(a)ml:
-compose.yaml
-[2025-08-08 13:47:17.491 -0400] INFO   : [App] [plex] Found 1 env files matching pattern **/.env:
-.env
-[2025-08-08 13:47:17.491 -0400] INFO   : [App] [plex] Using .komodoEnv for Komodo-written env file
-[2025-08-08 13:47:17.492 -0400] INFO   : [App] [plex] Stack config complete
-[2025-08-08 13:47:17.492 -0400] INFO   : [App] [homepage] Found Stack 'homepage' at dir /filesOnServer/homepage
-[2025-08-08 13:47:17.493 -0400] INFO   : [App] [homepage] Found 3 files matching compose pattern **/{compose,docker-compose}*.y?(a)ml:
+[2025-08-11 14:06:19.107 -0400] INFO   : [App] [Files On Server] [immich] Using file(s): docker/docker-compose.yaml
+[2025-08-11 14:06:19.108 -0400] INFO   : [App] [Files On Server] [immich] Stack config complete
+[2025-08-11 14:06:19.108 -0400] INFO   : [App] [Files On Server] [jellyfin] Found Stack 'jellyfin' at dir /filesOnServer/jellyfin
+[2025-08-11 14:06:19.109 -0400] INFO   : [App] [Files On Server] [jellyfin] Found 3 files matching compose glob:
 compose.yaml
 docker-compose.yaml
 docker/docker-compose.yaml
-[2025-08-08 13:47:17.493 -0400] INFO   : [App] [homepage] Found 1 env files matching pattern **/.env:
+[2025-08-11 14:06:19.110 -0400] INFO   : [App] [Files On Server] [jellyfin] Using file: compose.yaml but not writing to file_paths since this is the Komodo default
+[2025-08-11 14:06:19.111 -0400] INFO   : [App] [Files On Server] [jellyfin] Found 1 env files matching pattern **/.env:
 .env
-[2025-08-08 13:47:17.494 -0400] INFO   : [App] [homepage] Using .komodoEnv for Komodo-written env file
-[2025-08-08 13:47:17.494 -0400] INFO   : [App] [homepage] Stack config complete
-[2025-08-08 13:47:17.495 -0400] INFO   : [App] TOML:
+[2025-08-11 14:06:19.111 -0400] INFO   : [App] [Files On Server] [jellyfin] Using .komodoEnv for Komodo-written env file
+[2025-08-11 14:06:19.111 -0400] INFO   : [App] [Files On Server] [jellyfin] Stack config complete
+[2025-08-11 14:06:19.111 -0400] INFO   : [App] [Files On Server] [octoprint] Found Stack 'octoprint' at dir /filesOnServer/octoprint
+[2025-08-11 14:06:19.112 -0400] WARN   : [App] [Files On Server] [octoprint] Did not find any files patterns matching compose glob
+[2025-08-11 14:06:19.112 -0400] INFO   : [App] [Files On Server] [octoprint] Stack config complete
+[2025-08-11 14:06:19.113 -0400] INFO   : [App] [Files On Server] [plex] Found Stack 'plex' at dir /filesOnServer/plex
+[2025-08-11 14:06:19.114 -0400] INFO   : [App] [Files On Server] [plex] Found 1 files matching compose glob:
+compose.yaml
+[2025-08-11 14:06:19.114 -0400] INFO   : [App] [Files On Server] [plex] Using file: compose.yaml but not writing to file_paths since this is the Komodo default
+[2025-08-11 14:06:19.115 -0400] INFO   : [App] [Files On Server] [plex] Stack config complete
+[2025-08-11 14:06:19.115 -0400] INFO   : [App] [Files On Server] [uptime-kuma] Found Stack 'uptime-kuma' at dir /filesOnServer/uptime-kuma
+[2025-08-11 14:06:19.116 -0400] INFO   : [App] [Files On Server] [uptime-kuma] Found 1 files matching compose glob:
+compose.yaml
+[2025-08-11 14:06:19.116 -0400] INFO   : [App] [Files On Server] [uptime-kuma] Using file: compose.yaml but not writing to file_paths since this is the Komodo default
+[2025-08-11 14:06:19.117 -0400] INFO   : [App] [Files On Server] [uptime-kuma] Found 1 env files matching pattern **/.env:
+.env
+[2025-08-11 14:06:19.117 -0400] INFO   : [App] [Files On Server] [uptime-kuma] Using .komodoEnv for Komodo-written env file
+[2025-08-11 14:06:19.117 -0400] INFO   : [App] [Files On Server] [uptime-kuma] Stack config complete
+[2025-08-11 14:06:19.118 -0400] INFO   : [App] [Files On Server] Built Stack configs for 6 folders
+[2025-08-11 14:06:19.119 -0400] INFO   : [App] Copy the text between the scissors to use as the *Resource File* contents within your Resource Sync
+
+✂️  ✂️  ✂️  ✂️  ✂️  ✂️  ✂️  ✂️  ✂️  ✂️  ✂️  ✂️
 [[stack]]
-name = "uptime_kuma"
+name = "compose"
 
 [stack.config]
 server = "my-cool-server"
-run_directory = "/home/myUser/homelab/uptime_kuma"
+run_directory = "/home/myUser/homelab/compose"
 files_on_host = true
 auto_update = false
 poll_for_updates = false
-file_paths = [ "compose.yaml" ]
 
 [[stack]]
 name = "immich"
@@ -210,6 +229,28 @@ poll_for_updates = false
 file_paths = [ "docker/docker-compose.yaml" ]
 
 [[stack]]
+name = "jellyfin"
+
+[stack.config]
+server = "my-cool-server"
+run_directory = "/home/myUser/homelab/jellyfin"
+files_on_host = true
+auto_update = false
+poll_for_updates = false
+env_file_path = ".komodoEnv"
+additional_env_files = [ ".env" ]
+
+[[stack]]
+name = "octoprint"
+
+[stack.config]
+server = "my-cool-server"
+run_directory = "/home/myUser/homelab/octoprint"
+files_on_host = true
+auto_update = false
+poll_for_updates = false
+
+[[stack]]
 name = "plex"
 
 [stack.config]
@@ -218,36 +259,33 @@ run_directory = "/home/myUser/homelab/plex"
 files_on_host = true
 auto_update = false
 poll_for_updates = false
-file_paths = [ "compose.yaml" ]
-env_file_path = ".komodoEnv"
-additional_env_files = [ ".env" ]
 
 [[stack]]
-name = "homepage"
+name = "uptime-kuma"
 
 [stack.config]
 server = "my-cool-server"
-run_directory = "/home/myUser/homelab/homepage"
+run_directory = "/home/myUser/homelab/uptime-kuma"
 files_on_host = true
 auto_update = false
 poll_for_updates = false
-file_paths = [ "compose.yaml" ]
 env_file_path = ".komodoEnv"
 additional_env_files = [ ".env" ]
-[2025-08-08 13:47:17.496 -0400] INFO   : [App] Done!
+✂️  ✂️  ✂️  ✂️  ✂️  ✂️  ✂️  ✂️  ✂️  ✂️  ✂️  ✂️
+[2025-08-11 14:06:19.119 -0400] INFO   : [App] Done!
 ```
 
-Copy everything after `[2025-08-08 13:47:17.495 -0400] INFO   : [App] TOML:` up until the next timestamp -- this is the contents used in the [**Using Sync Resources**](#using-sync-resources) section.
+Copy everything between ✂️ lines -- this is the contents used in the [**Using Sync Resources**](#using-sync-resources) section.
 
 **TIP**
 
 Use
 
 ```
-docker compose logs --no-log-prefix
+docker compose up --no-log-prefix
 ```
 
-after running Komodo Import to get output without the service name prefix, makes getting clear TOML output easier.
+to get output without the service name prefix, makes getting clear TOML output easier.
 
 </details>
 

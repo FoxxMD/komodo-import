@@ -5,8 +5,8 @@ services:
       ## ParentDirectory:FILES_ON_SERVER_DIR
       - ./myprojects:/filesOnServer
       
-      ## optional, TOML is saved to file here
-      #- ./config:/config
+      ## optional, TOML is saved to file here when OUTPUT_DIR env is present
+      #- ./output:/output
     environment:
       - TZ=America/New_York
       ## Komodo Server name to use for generated Stacks
@@ -24,7 +24,6 @@ services:
       #- COMPOSE_FILE_GLOB=
       #- ENV_FILE_GLOB=
 
-      ## use if using /config for saving TOML
-      #- PUID=1000
-      #- PGID=1000
+      ## only saves to file if this ENV is present
+      #- OUTPUT_DIR=/output
     restart: no
