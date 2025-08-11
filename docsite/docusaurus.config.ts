@@ -129,7 +129,7 @@ const config: Config = {
               },
               {
                 label: 'Usage',
-                to: 'docs/Usage',
+                to: 'docs/usage',
               }
             ],
           },
