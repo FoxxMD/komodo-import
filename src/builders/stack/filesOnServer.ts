@@ -63,7 +63,13 @@ export const buildFileStack = async (path: string, options: BuildFileStackOption
                 // otherwise assume user wants all matched files
                 stack.config.file_paths = sorted;
             }
-            logger.info(`Using file(s): ${stack.config.file_paths.join('\n')}`);
+            
+            if(stack.config.file_paths.length === 1 && stack.config.file_paths[0] === 'compose.yaml') {
+                delete stack.config.file_paths;
+                logger.info(`Using file: compose.yaml but not writing to file_paths since this is the Komodo default`);
+            } else {
+                logger.info(`Using file(s): ${stack.config.file_paths.join('\n')}`);
+            }
         }
 
 
