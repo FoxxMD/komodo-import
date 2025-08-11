@@ -8,7 +8,8 @@
     "test": "mocha --reporter spec",
     "build:backend": "tsc -p src",
     "dev": "nodemon -w src -x tsx src/index.ts",
-    "start": "NODE_ENV=production tsx src/index.ts"
+    "start": "NODE_ENV=production tsx src/index.ts",
+    "demo": "HOST_PARENT_PATH=/my/cool/path SERVER_NAME=my-cool-server FILES_ON_SERVER_DIR=tests/exampleDir tsx src/index.ts"
   },
   "engines": {
     "node": ">=18.19.1",

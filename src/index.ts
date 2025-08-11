@@ -12,7 +12,7 @@ import { parse, stringify } from 'smol-toml';
 import { fileOrDirectoryIsWriteable, pathExistsAndIsReadable, readDirectories, writeFile } from './common/utils/io.js';
 import { _PartialStackConfig } from 'komodo_client/dist/types.js';
 import { TomlStack } from './common/infrastructure/tomlObjects.js';
-import { buildFileStack } from './builders/stack/filesOnServer.js';
+import { buildFileStack, buildFileStacks } from './builders/stack/filesOnServer.js';
 import { CommonImportOptions } from './common/infrastructure/config/common.js';
 import { FilesOnServerConfig } from './common/infrastructure/config/filesOnServer.js';
 
@@ -98,10 +98,9 @@ try {
 
     const dirs = await readDirectories(FILES_ON_SERVER_DIR);
 
-    const stacks: TomlStack[] = [];
-    for (const folder of dirs) {
-        stacks.push(await buildFileStack(path.join(FILES_ON_SERVER_DIR, folder), { ...filesOnServerConfig, logger }))
-    }
+    let stacks: TomlStack[] = [];
+    const folderPaths = dirs.map(x => path.join(FILES_ON_SERVER_DIR, x));
+    stacks = await buildFileStacks(folderPaths, { ...filesOnServerConfig, logger });
 
     if (stacks.length === 0) {
         logger.info('No Stacks found! Nothing to do.');
@@ -114,7 +113,18 @@ try {
 
     const time = dayjs().format('YYYY-MM-DD--HH-mm-ss');
 
-    const toml = stringify(data);
+    let toml: string;
+    let logTomlData = isDebugMode();
+    try {
+        toml = stringify(data);
+    } catch (e) {
+        logger.error(new Error('Could not produce TOML', {cause: e}));
+        logTomlData = true;
+    } finally {
+        if(logTomlData) {
+            logger.info(`TOML Data: ${JSON.stringify(data)}`);
+        }
+    }
 
     logger.info(`TOML:\n${toml}`);
 
