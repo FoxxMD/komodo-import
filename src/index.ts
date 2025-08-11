@@ -15,6 +15,9 @@ import { TomlStack } from './common/infrastructure/tomlObjects.js';
 import { buildFileStack, buildFileStacks } from './builders/stack/filesOnServer.js';
 import { CommonImportOptions } from './common/infrastructure/config/common.js';
 import { FilesOnServerConfig } from './common/infrastructure/config/filesOnServer.js';
+import { KomodoClient, Types } from "komodo_client";
+import { exportToLog } from './exporters/exportToLog.js';
+import { exportToFile } from './exporters/exportToFile.js';
 
 dayjs.extend(utc)
 dayjs.extend(timezone);
@@ -36,8 +39,6 @@ process.on('uncaughtExceptionMonitor', (err, origin) => {
 const configDir = process.env.CONFIG_DIR || path.resolve(projectDir, `./config`);
 
 try {
-
-    initLogger.verbose(`Config Dir ENV: ${process.env.CONFIG_DIR} -> Resolved: ${configDir}`);
 
     if (process.env.DEBUG_MODE !== undefined) {
         // make sure value is legit
@@ -111,8 +112,6 @@ try {
         stack: stacks
     };
 
-    const time = dayjs().format('YYYY-MM-DD--HH-mm-ss');
-
     let toml: string;
     let logTomlData = isDebugMode();
     try {
@@ -126,17 +125,8 @@ try {
         }
     }
 
-    logger.info(`TOML:\n${toml}`);
-
-    const tomlFilePath = path.join(configDir, `sync-${time}.toml`);
-    try {
-        fileOrDirectoryIsWriteable(tomlFilePath);
-        await promises.mkdir(configDir, { recursive: true });
-        await writeFile(path.join(configDir, `sync-${time}.toml`), toml);
-        logger.info(`Contents written to ${tomlFilePath}`);
-    } catch (e) {
-        logger.warn(new Error(`Unable to write toml to file`, { cause: e }));
-    }
+    exportToLog(toml, logger);
+    await exportToFile(toml, logger);
 
     logger.info('Done!');
 

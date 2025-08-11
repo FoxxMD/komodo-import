@@ -234,7 +234,6 @@ poll_for_updates = false
 file_paths = [ "compose.yaml" ]
 env_file_path = ".komodoEnv"
 additional_env_files = [ ".env" ]
-[2025-08-08 13:47:17.496 -0400] INFO   : [App] Contents written to /config/sync-2025-08-08--13-47-17.toml
 [2025-08-08 13:47:17.496 -0400] INFO   : [App] Done!
 ```
 
@@ -254,6 +253,24 @@ after running Komodo Import to get output without the service name prefix, makes
 
 ## Writing Generated TOML to File
 
-Komodo Import will additionally attempt to write the generated output to a `.toml` file in the `/config` folder within its container.
+Komodo Import will additionally attempt to write the generated output to a `.toml` file if the ENV `OUTPUT_DIR` is present. This should be the *directory* (not file) that the generated file should be written to.
 
-To use/persist these files, bind mount a folder to `/config` -- see example [compose.yaml](./compose.yaml) in the commented out `volume` lines.
+Bind mount a folder into the container and set `OUTPUT_DIR` like in the example below:
+
+<details>
+
+<summary>File Output Example</summary>
+
+```yaml
+services:
+  komodo-import:
+  # ...
+    environment:
+      # ...
+      - OUTPUT_DIR=/output
+    volumes:
+      # ...
+      - /my/host/folder:/output
+```
+
+</details>
