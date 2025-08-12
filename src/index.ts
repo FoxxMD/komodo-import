@@ -20,6 +20,7 @@ import { exportToFile } from './exporters/exportToFile.js';
 import { exportToSync } from './exporters/exportToApiSync.js';
 import { getGitBranch, matchRemote } from './common/utils/git.js';
 import { getDefaultKomodoApi } from './common/utils/komodo.js';
+import { buildStacksFromPath } from './builders/stack/stackBuilder.js';
 
 dayjs.extend(utc)
 dayjs.extend(timezone);
@@ -59,9 +60,6 @@ try {
 
     getDefaultKomodoApi(logger);
 
-   const resp = await getGitBranch();
-   const remote = await matchRemote(resp.remote);
-
     const importOptions: CommonImportOptions = {
         server: process.env.SERVER_NAME,
         imageRegistryProvider: process.env.IMAGE_REGISTRY_PROVIDER,
@@ -83,32 +81,8 @@ try {
         hostParentPath: process.env.HOST_PARENT_PATH
     };
 
-    if (filesOnServerConfig.hostParentPath === undefined || filesOnServerConfig.hostParentPath.trim() === '') {
-        logger.error('ENV HOST_PARENT_PATH must be set');
-        process.exit(1);
-    }
-
-    if (process.env.FILES_ON_SERVER_DIR === undefined || process.env.FILES_ON_SERVER_DIR.trim() === '') {
-        logger.error('ENV FILES_ON_SERVER_DIR must be set');
-        process.exit(1);
-    }
-
-    let FILES_ON_SERVER_DIR = process.env.FILES_ON_SERVER_DIR;
-    try {
-        FILES_ON_SERVER_DIR = await promises.realpath(process.env.FILES_ON_SERVER_DIR);
-        logger.info(`Files On Server Dir ENV: ${process.env.FILES_ON_SERVER_DIR} -> Resolved: ${FILES_ON_SERVER_DIR}`);
-        pathExistsAndIsReadable(FILES_ON_SERVER_DIR)
-    } catch (e) {
-        logger.error(`Could not access ${FILES_ON_SERVER_DIR}.${parseBool(process.env.IS_DOCKER) ? ' This is the path *in container* that is read so make sure you have mounted it on the host!' : ''}`);
-        logger.error(e);
-        process.exit(1);
-    }
-
-    const dirs = await readDirectories(FILES_ON_SERVER_DIR);
-
     let stacks: TomlStack[] = [];
-    const folderPaths = dirs.map(x => path.join(FILES_ON_SERVER_DIR, x));
-    stacks = await buildFileStacks(folderPaths, { ...filesOnServerConfig, logger });
+    stacks = await buildStacksFromPath(process.env.FILES_ON_SERVER_DIR, filesOnServerConfig, logger);
 
     if (stacks.length === 0) {
         logger.info('No Stacks found! Nothing to do.');

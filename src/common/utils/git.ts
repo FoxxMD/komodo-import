@@ -101,7 +101,7 @@ export const detectGitRepo = async (path: string, logger: Logger): Promise<[stri
 
 
     try {
-        branchData = await getGitBranch();
+        branchData = await getGitBranch({cwd: path});
         if(branchData === undefined) {
             logger.warn('The tracked branch does not have a remote branch! Will fallback to files-on-server mode');
             return undefined;

@@ -1,6 +1,6 @@
 import { childLogger, Logger } from "@foxxmd/logging";
 import { KomodoClient, Types } from "komodo_client";
-import { isDebugMode, isUndefinedOrEmptyString } from "../common/utils/utils.js";
+import { isDebugMode, isUndefinedOrEmptyString, parseBool } from "../common/utils/utils.js";
 import path from 'path';
 import { stripIndents } from "common-tags";
 import dayjs from "dayjs";
@@ -9,7 +9,7 @@ import { normalizeWebAddress } from "../common/utils/network.js";
 export const exportToSync = async (toml: string, parentLogger: Logger): Promise<void> => {
     const logger = childLogger(parentLogger, 'Sync API');
 
-    if (!isUndefinedOrEmptyString(process.env.KOMODO_URL)) {
+    if (parseBool(process.env.OUTPUT_API_SYNC)) {
         try {
             if (isUndefinedOrEmptyString(process.env.API_KEY)) {
                 logger.error(`Cannot export to Resource Sync because env API_KEY is missing`);
