@@ -7,7 +7,7 @@ import { dirHasGitConfig, findFilesRecurive, readDirectories, sortComposePaths }
 import { stripIndents } from "common-tags";
 import { isDebugMode, removeUndefinedKeys } from "../../common/utils/utils.js";
 import { DEFAULT_COMPOSE_GLOB, DEFAULT_ENV_GLOB, selectComposeFiles, selectEnvFiles } from "./stackUtils.js";
-import { detectGitRepo, getGitBranch, komodoRepoFromRemoteAndDomain, matchGitDataWithKomodo, matchRemote, RemoteInfo } from "../../common/utils/git.js";
+import { detectGitRepo, komodoRepoFromRemoteAndDomain, matchGitDataWithKomodo, matchRemote, RemoteInfo } from "../../common/utils/git.js";
 
 export type BuildGitStackOptions = GitStackConfig & { logger: Logger };
 
@@ -32,25 +32,34 @@ export const buildGitStack = async (path: string, options: BuildGitStackOptions)
     const logger = childLogger(options.logger, [pathInfo.name, 'Git']);
 
     if (inMonorepo === false) {
+
+        if(!dirHasGitConfig(await readDirectories(path))) {
+            throw new Error('Not a git repo');
+        }
+
         let gitData: Awaited<ReturnType<typeof detectGitRepo>>;
         try {
             gitData = await detectGitRepo(path, logger);
         } catch (e) {
             throw new Error(`Unable to parse git info in folder`, { cause: e });
         }
-
+        if(gitData === undefined) {
+            throw new Error('Folder has a .git folder but could not find a suitable remote');
+        }
+        logger.info(`Folder has tracked branch '${gitData[0]}' with valid remote '${gitData[1].remote}'`)
 
         const [provider, repo, repoHint] = await matchGitDataWithKomodo(gitData);
-        if (repoHint !== undefined) {
-            logger.warn(`Stack will be built without a linked repo: ${repoHint}}`);
-        }
         if (repo === undefined) {
+            logger.verbose(`Stack will be built without a linked repo: ${repoHint}`);
+            const repo = komodoRepoFromRemoteAndDomain(provider?.domain ?? 'github.com', gitData[1].url);
+            logger.debug(`Parsed Repo '${repo}' from Remote URL ${gitData[1].url}`);
             gitStackConfig = {
                 git_provider: provider?.domain,
                 git_account: provider?.username,
-                repo: komodoRepoFromRemoteAndDomain(provider?.domain ?? 'github.com', gitData[1].remote)
+                repo
             };
         } else {
+            logger.verbose(`Using linked repo ${repo.name}}`);
             gitStackConfig = {
                 linked_repo: repo.name,
             }

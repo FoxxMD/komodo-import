@@ -11,21 +11,26 @@ import { getDefaultKomodoApi } from './komodo.js';
 */
 
 
-const TRACKED_BRANCH_REGEX: RegExp = new RegExp(/^## (?<branch>[^\.]+)\.\.\.(?<remote>[^\/\n\r]+)/);
-export const getGitBranch = async (options: Options = {}): Promise<{ branch: string, remote: string } | undefined> => {
+const TRACKED_BRANCH_REGEX: RegExp = new RegExp(/^## (?<branch>[^\.\s]+)(?:\.\.\.(?<remote>[^\/\n\r]+))?/);
+export const getGitBranch = async (options: Options = {}): Promise<{ branch?: string, remote?: string, raw: string }> => {
     try {
         const res = await execa({ cwd: process.cwd(), ...options })`git status -sb`;
+        const output = res.stdout as string;
+        if(output.includes('No commits yet')) {
+            return {raw: output};
+        }
         const regResult = parseRegexSingle(TRACKED_BRANCH_REGEX, res.stdout as string);
         if (regResult === undefined) {
-            return undefined;
+            return {raw: output};
         }
         return {
             branch: regResult.named.branch,
-            remote: regResult.named.remote
+            remote: regResult.named.remote,
+            raw: output
         }
     } catch (e) {
         if (e.stderr !== undefined && (e.stderr as string).includes('not a git repository')) {
-            return undefined;
+            return {raw: 'not a git repository'};
         }
         throw new Error(`Unexpected error occured while trying to get git branch with command ${e.command}`, { cause: e });
     }
@@ -102,11 +107,15 @@ export const detectGitRepo = async (path: string, logger: Logger): Promise<[stri
 
     try {
         branchData = await getGitBranch({cwd: path});
-        if(branchData === undefined) {
-            logger.warn('The tracked branch does not have a remote branch! Will fallback to files-on-server mode');
+        if(branchData.branch === undefined && branchData.remote === undefined) {
+            logger.debug(`Could not determine tracked branch | Raw Output: ${branchData.raw.split('\n')[0]}`);
             return undefined;
         }
-        remote = await matchRemote(branchData.remote);
+        if(branchData.remote === undefined) {
+            logger.debug(`Could not parse remote branch for tracked branch '${branchData.branch}' | Raw Output: ${branchData.raw.split('\n')[0]}`);
+            return undefined;
+        }
+        remote = await matchRemote(branchData.remote, {cwd: path});
         if(remote === undefined) {
             logger.warn(`No remote '${branchData.remote}' found for tracked branch '${branchData.branch}?? Will fallback to files-on-server mode`);
             return undefined;
@@ -122,7 +131,14 @@ export const komodoRepoFromRemoteAndDomain = (domain: string, remote: string): s
     if(broken.length < 2) {
         return undefined;
     }
-    return broken[1].replace('.git', '');
+    let cleaned = broken[1].replace('.git', '');
+    if(cleaned[0] === '/') {
+        cleaned = cleaned.substring(1);
+    }
+    if(cleaned[cleaned.length - 1] === '/') {
+        cleaned = cleaned.substring(0, cleaned.length - 1);
+    }
+    return cleaned;
 }
 
 export const matchGitDataWithKomodo = async (gitData: Awaited<ReturnType<typeof detectGitRepo>>): Promise<[GitProviderAccount?, RepoListItem?, string?]> => {
@@ -130,13 +146,13 @@ export const matchGitDataWithKomodo = async (gitData: Awaited<ReturnType<typeof 
 
     let provider: GitProviderAccount;
     let repo: RepoListItem;
-    let repoHint: string = 'No existing Komodo Repo resource matches the remote';
+    let repoHint: string = 'No Komodo Repo matches the remote';
 
     const validRepos = repos.filter(x => gitData[1].url.includes(x.info.repo) && gitData[1].url.includes(x.info.git_provider));
     if (validRepos.length !== 0) {
         const branchAndRepo = validRepos.find(x => x.info.branch === gitData[0]);
         if (branchAndRepo === undefined) {
-            repoHint = 'There are existing Komodo Repo resource that match the remote but none have a matching branch';
+            repoHint = `Komodo Repos exist but branches (${validRepos.map(x => `${x.info.branch} on ${x.name}`).join(',')}) does not match`;
         } else {
             repo = branchAndRepo;
             repoHint = undefined;
@@ -148,7 +164,7 @@ export const matchGitDataWithKomodo = async (gitData: Awaited<ReturnType<typeof 
     if (validProvider === undefined) {
         // default provider, we don't need to find an added one
         if (!gitData[1].url.includes('github.com')) {
-            throw new Error(`No existing Komodo Git Account provider that matches remote ${gitData[1].url} exists.`);
+            throw new Error(`No Komodo Git Account provider matches remote ${gitData[1].url}`);
         }
     } else {
         provider = validProvider;

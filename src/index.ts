@@ -18,7 +18,6 @@ import { FilesOnServerConfig } from './common/infrastructure/config/stackConfig.
 import { exportToLog } from './exporters/exportToLog.js';
 import { exportToFile } from './exporters/exportToFile.js';
 import { exportToSync } from './exporters/exportToApiSync.js';
-import { getGitBranch, matchRemote } from './common/utils/git.js';
 import { getDefaultKomodoApi } from './common/utils/komodo.js';
 import { buildStacksFromPath } from './builders/stack/stackBuilder.js';
 

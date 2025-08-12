@@ -99,26 +99,19 @@ export const buildStacksFromPath = async (path: string, options: AnyStackConfig,
                 folderLogger.error(new Error(`Unable to build Git Stack for folder ${f}`, { cause: e }));
             }
         } else {
-            if (dirHasGitConfig(await readDirectories(f))) {
-                let gitData: Awaited<ReturnType<typeof detectGitRepo>>;
-                try {
-                    gitData = await detectGitRepo(f, folderLogger);
-                } catch (e) {
-                    folderLogger.warn(new Error(`Unable to parse git info in folder, falling back to Files-On-Server`, { cause: e }));
-                }
-                if (gitData !== undefined) {
-                    try {
-                        stacks.push(await buildGitStack(f, { inMonorepo: false, ...options, logger }));
-                    } catch (e) {
-                        folderLogger.error(new Error(`Unable to build Git Stack for folder ${f}`, { cause: e }));
-                    } finally {
-                        continue;
-                    }
-                } else {
+
+            try {
+                stacks.push(await buildGitStack(f, { inMonorepo: false, ...options, logger }));
+                continue;
+            } catch (e) {
+                if (e.message === 'Not a git repo') {
+                    folderLogger.debug('Not a git repo, switching to Files-On-Server');
+                } else if (e.message === 'Folder has a .git folder but could not find a suitable remote') {
                     folderLogger.verbose('Folder has a .git folder but could not find a suitable remote, falling back to Files-On-Server');
+                } else {
+                    folderLogger.error(new Error(`Unable to build Git Stack for folder ${f}`, { cause: e }));
+                    continue;
                 }
-            } else {
-                folderLogger.verbose('Folder is not a git repo, building as Files-On-Server Stack');
             }
 
             const opts = options as FilesOnServerConfig;
