@@ -5,7 +5,7 @@ import { mkdir, writeFile, chmod, constants } from 'node:fs/promises';
 import path from "path";
 import { loggerTest } from "@foxxmd/logging";
 import { buildFileStack, BuildFileStackOptions } from '../src/builders/stack/filesOnServer.js';
-import { FilesOnServerConfig } from '../src/common/infrastructure/config/filesOnServer.js';
+import { FilesOnServerConfig } from '../src/common/infrastructure/config/stackConfig.js';
 
 const DEFAULT_FOS_PATH = '/my/cool'
 const DEFAULT_SERVER = 'test-server';

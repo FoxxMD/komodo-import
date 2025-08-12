@@ -1,16 +1,17 @@
 import { Logger, childLogger } from "@foxxmd/logging";
-import { FilesOnServerConfig } from "../../common/infrastructure/config/stackConfig.js";
+import { FilesOnServerConfig, GitStackConfig } from "../../common/infrastructure/config/stackConfig.js";
 import { _PartialStackConfig } from 'komodo_client/dist/types.js';
 import { parse, ParsedPath, sep, join } from 'path';
 import { TomlStack } from "../../common/infrastructure/tomlObjects.js";
-import { findFilesRecurive, sortComposePaths } from "../../common/utils/io.js";
+import { dirHasGitConfig, findFilesRecurive, readDirectories, sortComposePaths } from "../../common/utils/io.js";
 import { stripIndents } from "common-tags";
 import { isDebugMode, removeUndefinedKeys } from "../../common/utils/utils.js";
 import { DEFAULT_COMPOSE_GLOB, DEFAULT_ENV_GLOB, selectComposeFiles, selectEnvFiles } from "./stackUtils.js";
+import { getGitBranch, matchRemote, RemoteInfo } from "../../common/utils/git.js";
 
-export type BuildFileStackOptions = FilesOnServerConfig & { logger: Logger };
+export type BuildGitStackOptions = GitStackConfig & { logger: Logger };
 
-export const buildFileStack = async (path: string, options: BuildFileStackOptions): Promise<TomlStack> => {
+export const buildGitStack = async (path: string, options: BuildGitStackOptions): Promise<TomlStack> => {
 
     const {
         composeFileGlob = DEFAULT_COMPOSE_GLOB,
@@ -21,13 +22,25 @@ export const buildFileStack = async (path: string, options: BuildFileStackOption
         autoUpdate = false,
         pollForUpdate = false,
         server,
-        hostParentPath
+        linked_repo,
+        git_provider,
+        repo
     } = options;
 
     const pathInfo: ParsedPath = parse(path);
 
-    const logger = childLogger(options.logger, [pathInfo.name, 'Files On Server']);
+    const logger = childLogger(options.logger, [pathInfo.name, 'Git']);
     logger.info(`Found Stack '${pathInfo.name}' at dir ${path}`);
+
+    if('linked_repo' in options || 'repo' in options) {
+
+    } else {
+        try {
+            await detectGitRepo(path, logger);
+        } catch (e) {
+
+        }
+    }
 
     let stack: TomlStack;
     let logJson = isDebugMode();
@@ -66,29 +79,4 @@ export const buildFileStack = async (path: string, options: BuildFileStackOption
             logger.debug(`Stack Config: ${JSON.stringify(stack)}}`);
         }
     }
-}
-
-export const buildFileStacks = async (dirs: string[], options: FilesOnServerConfig & { logger: Logger }): Promise<TomlStack[]> => {
-    const logger = childLogger(options.logger, 'Files On Server');
-
-    const {
-        composeFileGlob = DEFAULT_COMPOSE_GLOB,
-        envFileGlob = DEFAULT_ENV_GLOB,
-    } = options;
-
-    logger.info(`Processing Stacks for ${dirs.length} folders:\n${dirs.join('\n')}`);
-    logger.info(`Compose File Glob: ${composeFileGlob}`);
-    logger.info(`Env Glob: ${envFileGlob}`);
-
-    const stacks: TomlStack[] = [];
-    for (const dir of dirs) {
-        try {
-            stacks.push(await buildFileStack(dir, {...options, logger}));
-        } catch (e) {
-            logger.error(new Error(`Unable to build Stack for folder ${dir}`, { cause: e }));
-        }
-    }
-
-    logger.info(`Built Stack configs for ${stacks.length} folders`);
-    return stacks;
 }

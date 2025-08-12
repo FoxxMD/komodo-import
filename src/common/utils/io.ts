@@ -113,3 +113,7 @@ export const readDirectories = async (path: string): Promise<string[]> => {
         throw new Error(`Could not read folders at dir ${path}`);
     }
 }
+
+export const dirHasGitConfig = (paths: string[]): boolean => {
+    return paths.some(x => x === '.git');
+}

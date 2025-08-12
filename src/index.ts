@@ -14,10 +14,12 @@ import { _PartialStackConfig } from 'komodo_client/dist/types.js';
 import { TomlStack } from './common/infrastructure/tomlObjects.js';
 import { buildFileStack, buildFileStacks } from './builders/stack/filesOnServer.js';
 import { CommonImportOptions } from './common/infrastructure/config/common.js';
-import { FilesOnServerConfig } from './common/infrastructure/config/filesOnServer.js';
+import { FilesOnServerConfig } from './common/infrastructure/config/stackConfig.js';
 import { exportToLog } from './exporters/exportToLog.js';
 import { exportToFile } from './exporters/exportToFile.js';
 import { exportToSync } from './exporters/exportToApiSync.js';
+import { getGitBranch, matchRemote } from './common/utils/git.js';
+import { getDefaultKomodoApi } from './common/utils/komodo.js';
 
 dayjs.extend(utc)
 dayjs.extend(timezone);
@@ -54,6 +56,11 @@ try {
     logger = childLogger(aLogger, 'App');
 
     logger.info(`Version: ${version}`);
+
+    getDefaultKomodoApi(logger);
+
+   const resp = await getGitBranch();
+   const remote = await matchRemote(resp.remote);
 
     const importOptions: CommonImportOptions = {
         server: process.env.SERVER_NAME,
