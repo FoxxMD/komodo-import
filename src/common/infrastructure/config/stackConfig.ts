@@ -2,11 +2,13 @@ import { CommonImportOptions } from "./common.js";
 
 export interface FilesOnServerConfig extends CommonImportOptions {
     hostParentPath: string
+    writeEnv?: boolean
 }
 
 export interface GitStackCommonConfig extends CommonImportOptions {
     inMonorepo?: boolean | string
-    hostParentPath?: string
+    hostParentPath?: string,
+    writeEnv?: boolean
 }
 
 export interface GitStackStandaloneConfig extends GitStackCommonConfig {

@@ -3,7 +3,7 @@ import { FilesOnServerConfig } from "../../common/infrastructure/config/stackCon
 import { _PartialStackConfig } from 'komodo_client/dist/types.js';
 import { parse, ParsedPath, sep, join } from 'path';
 import { TomlStack } from "../../common/infrastructure/tomlObjects.js";
-import { findFilesRecurive, sortComposePaths } from "../../common/utils/io.js";
+import { findFilesRecurive, readText, sortComposePaths } from "../../common/utils/io.js";
 import { stripIndents } from "common-tags";
 import { isDebugMode, removeUndefinedKeys } from "../../common/utils/utils.js";
 import { DEFAULT_COMPOSE_GLOB, DEFAULT_ENV_GLOB, selectComposeFiles, selectEnvFiles } from "./stackUtils.js";
@@ -21,7 +21,8 @@ export const buildFileStack = async (path: string, options: BuildFileStackOption
         autoUpdate = false,
         pollForUpdate = false,
         server,
-        hostParentPath
+        hostParentPath,
+        writeEnv = false,
     } = options;
 
     const pathInfo: ParsedPath = parse(path);
@@ -51,10 +52,20 @@ export const buildFileStack = async (path: string, options: BuildFileStackOption
         stack.config.file_paths = await selectComposeFiles(composeFileGlob, path, logger);
 
         const envFiles = await selectEnvFiles(envFileGlob, path, logger);
-        if(envFiles !== undefined) {
-            stack.config.env_file_path = komodoEnvName
-            logger.info(`Using ${komodoEnvName} for Komodo-written env file`);
-            stack.config.additional_env_files = envFiles;
+        if (envFiles !== undefined) {
+            if (writeEnv) {
+                logger.verbose('Writing env file(s) contents to Komodo Environmnent');
+                const envContents: string[] = [];
+                for (const f of envFiles) {
+                    envContents.push(await readText(envFiles))
+                }
+                stack.config.environment = envContents.join('\n');
+            }
+            else {
+                stack.config.env_file_path = komodoEnvName
+                logger.info(`Using ${komodoEnvName} for Komodo-written env file`);
+                stack.config.additional_env_files = envFiles;
+            }
         }
 
         logger.info('Stack config complete');
@@ -62,9 +73,9 @@ export const buildFileStack = async (path: string, options: BuildFileStackOption
         return removeUndefinedKeys(stack);
     } catch (e) {
         logJson = true;
-        throw new Error(`Error occurred while processing Stack for folder ${folderName}`, {cause: e});
+        throw new Error(`Error occurred while processing Stack for folder ${folderName}`, { cause: e });
     } finally {
-        if(logJson) {
+        if (logJson) {
             logger.debug(`Stack Config: ${JSON.stringify(stack)}}`);
         }
     }
@@ -85,7 +96,7 @@ export const buildFileStacks = async (dirs: string[], options: FilesOnServerConf
     const stacks: TomlStack[] = [];
     for (const dir of dirs) {
         try {
-            stacks.push(await buildFileStack(dir, {...options, logger}));
+            stacks.push(await buildFileStack(dir, { ...options, logger }));
         } catch (e) {
             logger.error(new Error(`Unable to build Stack for folder ${dir}`, { cause: e }));
         }

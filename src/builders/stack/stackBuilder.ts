@@ -97,6 +97,7 @@ export const buildStacksFromPath = async (path: string, options: AnyStackConfig,
         stackOptions = {
             ...stackOptions,
             ...gitStackConfig,
+            writeEnv: parseBool(process.env.GIT_WRITE_ENV, false),
             inMonorepo: true
         }
     } else {
@@ -122,7 +123,12 @@ export const buildStacksFromPath = async (path: string, options: AnyStackConfig,
         } else {
 
             try {
-                stacks.push(await buildGitStack(f, { inMonorepo: false, ...options, logger }));
+                stacks.push(await buildGitStack(f, { 
+                    inMonorepo: false, 
+                    writeEnv: parseBool(process.env.GIT_WRITE_ENV, false),
+                    ...options, 
+                    logger 
+                }));
                 continue;
             } catch (e) {
                 if (e instanceof SimpleError) {

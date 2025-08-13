@@ -3,12 +3,13 @@ import { FilesOnServerConfig, GitStackConfig, GitStackLinkedConfig, GitStackStan
 import { _PartialStackConfig } from 'komodo_client/dist/types.js';
 import { parse, ParsedPath, sep, join } from 'path';
 import { TomlStack } from "../../common/infrastructure/tomlObjects.js";
-import { dirHasGitConfig, findFilesRecurive, readDirectories, sortComposePaths } from "../../common/utils/io.js";
+import { dirHasGitConfig, findFilesRecurive, readDirectories, readText, sortComposePaths } from "../../common/utils/io.js";
 import { stripIndents } from "common-tags";
 import { isDebugMode, removeUndefinedKeys } from "../../common/utils/utils.js";
 import { DEFAULT_COMPOSE_GLOB, DEFAULT_ENV_GLOB, selectComposeFiles, selectEnvFiles } from "./stackUtils.js";
 import { detectGitRepo, GitRepoData, komodoRepoFromRemote, matchGitDataWithKomodo, matchRemote, RemoteInfo } from "../../common/utils/git.js";
 import { SimpleError } from "../../common/errors.js";
+import { readFile } from "fs/promises";
 
 export type BuildGitStackOptions = GitStackConfig & { logger: Logger };
 
@@ -24,7 +25,8 @@ export const buildGitStack = async (path: string, options: BuildGitStackOptions)
         pollForUpdate = false,
         server,
         inMonorepo = false,
-        hostParentPath
+        hostParentPath,
+        writeEnv = false,
     } = options
 
     let gitStackConfig: _PartialStackConfig;
@@ -43,7 +45,7 @@ export const buildGitStack = async (path: string, options: BuildGitStackOptions)
         try {
             gitData = await detectGitRepo(path);
         } catch (e) {
-            if(e instanceof SimpleError) {
+            if (e instanceof SimpleError) {
                 throw new SimpleError(`Unable to parse path as git repo: ${e.message}`);
             } else {
                 throw e;
@@ -55,11 +57,11 @@ export const buildGitStack = async (path: string, options: BuildGitStackOptions)
         if (repo === undefined) {
             logger.verbose(`No linked repo because ${repoHint}`);
             const [domain, repo] = komodoRepoFromRemote(gitData[1].url);
-            if(repo === undefined) {
+            if (repo === undefined) {
                 throw new Error(`Could not parse repo from Remote URL ${gitData[1].url}`);
             }
             logger.debug(`Parsed Repo '${repo}' with ${provider?.domain !== undefined ? `provider` : 'URL'} domain '${provider?.domain ?? domain}' from Remote URL ${gitData[1].url}`);
-            if(provider?.username !== undefined) {
+            if (provider?.username !== undefined) {
                 logger.debug(`Using provider username ${provider.username}`);
             }
             gitStackConfig = {
@@ -108,9 +110,18 @@ export const buildGitStack = async (path: string, options: BuildGitStackOptions)
 
         const envFiles = await selectEnvFiles(envFileGlob, path, logger);
         if (envFiles !== undefined) {
-            stack.config.env_file_path = komodoEnvName
-            logger.info(`Using ${komodoEnvName} for Komodo-written env file`);
-            stack.config.additional_env_files = envFiles.map(x => inMonorepo ? join(monoRepoPath, x) : x);
+            if (writeEnv) {
+                logger.verbose('Writing env file(s) contents to Komodo Environmnent');
+                const envContents: string[] = [];
+                for (const f of envFiles) {
+                    envContents.push(await readText(envFiles))
+                }
+                stack.config.environment = envContents.join('\n');
+            } else {
+                stack.config.env_file_path = komodoEnvName
+                logger.info(`Using ${komodoEnvName} for Komodo-written env file`);
+                stack.config.additional_env_files = envFiles.map(x => inMonorepo ? join(monoRepoPath, x) : x);
+            }
         }
 
         logger.info('Git Stack config complete');
