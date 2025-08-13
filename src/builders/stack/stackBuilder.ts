@@ -22,13 +22,24 @@ export const buildStacksFromPath = async (path: string, options: AnyStackConfig,
     let stackOptions = options;
 
     const logger = childLogger(parentLogger, 'Stacks');
-    let stacksDir: string;
+    let topDir: string;
     try {
-        stacksDir = await promises.realpath(path);
-        logger.info(`Files On Server Dir ENV: ${path} -> Resolved: ${stacksDir}`);
-        pathExistsAndIsReadable(stacksDir)
+        topDir = await promises.realpath(path);
+        logger.info(`Top Dir: ${path} -> Resolved: ${topDir}`);
+        pathExistsAndIsReadable(topDir)
     } catch (e) {
         throw new Error(`Could not access ${path}.${parseBool(process.env.IS_DOCKER) ? ' This is the path *in container* that is read so make sure you have mounted it on the host!' : ''}`);
+    }
+
+    let stacksDir: string = topDir;
+    if (!isUndefinedOrEmptyString(process.env.GIT_STACKS_DIR)) {
+        try {
+            stacksDir = await promises.realpath(process.env.GIT_STACKS_DIR);
+            logger.info(`Git Stack Dir: ${stacksDir} -> Resolved: ${stacksDir}`);
+            pathExistsAndIsReadable(stacksDir)
+        } catch (e) {
+            throw new Error(`Could not access ${stacksDir}.${parseBool(process.env.IS_DOCKER) ? ' This is the path *in container* that is read so make sure you have mounted it on the host!' : ''}`);
+        }
     }
 
     let stacks: TomlStack[] = [];
@@ -43,7 +54,7 @@ export const buildStacksFromPath = async (path: string, options: AnyStackConfig,
         throw e;
     }
 
-    logger.info(`Processing Stacks for ${dirs.length} folders:\n${dirs.join('\n')}`);
+    logger.info(`Processing Stacks for ${dirs.length} folders in ${stacksDir}:\n${dirs.join('\n')}`);
     logger.info(`Compose File Glob: ${composeFileGlob}`);
     logger.info(`Env Glob: ${envFileGlob}`);
 
@@ -51,7 +62,7 @@ export const buildStacksFromPath = async (path: string, options: AnyStackConfig,
 
     if (gitData !== undefined) {
 
-        logger.info(`Detected top-level dir ${stacksDir} is a Git repo: Branch ${gitData[0]} | Remote ${gitData[1].remote} | URL ${gitData[1].url}`);
+        logger.info(`Detected top-level dir ${topDir} is a Git repo: Branch ${gitData[0]} | Remote ${gitData[1].remote} | URL ${gitData[1].url}`);
         logger.info('Will treat this as a monorepo -- all subfolders will be built as Git-Repo Stacks using the same repo with Run Directory relative to repo root.');
 
         let gitStackConfig: Partial<GitStackConfig> = {
@@ -82,7 +93,8 @@ export const buildStacksFromPath = async (path: string, options: AnyStackConfig,
 
         stackOptions = {
             ...stackOptions,
-            ...gitStackConfig
+            ...gitStackConfig,
+            inMonorepo: true
         }
     } else {
         logger.info('Top-level dir is not a git repo -- subfolders will be individually detected as Git repo or files-on-server Stacks.');
@@ -95,7 +107,12 @@ export const buildStacksFromPath = async (path: string, options: AnyStackConfig,
 
         if (gitData !== undefined) {
             try {
-                stacks.push(await buildGitStack(f, { ...stackOptions, logger }));
+                stacks.push(await buildGitStack(f, 
+                    { 
+                        ...stackOptions,
+                        logger,
+                        hostParentPath: stacksDir === topDir ? undefined : stacksDir.replace(topDir, '').replace(/^\//, '')
+                    }));
             } catch (e) {
                 folderLogger.error(new Error(`Unable to build Git Stack for folder ${f}`, { cause: e }));
             }

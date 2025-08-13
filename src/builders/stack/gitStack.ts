@@ -22,12 +22,15 @@ export const buildGitStack = async (path: string, options: BuildGitStackOptions)
         autoUpdate = false,
         pollForUpdate = false,
         server,
-        inMonorepo
-    } = options;
+        inMonorepo,
+        hostParentPath
+    } = options
 
     let gitStackConfig: _PartialStackConfig;
 
     const pathInfo: ParsedPath = parse(path);
+
+    const monoRepoPath = inMonorepo ? (hostParentPath !== undefined ? join(hostParentPath, pathInfo.name) : undefined) : undefined;
 
     const logger = childLogger(options.logger, [pathInfo.name, 'Git']);
 
@@ -77,6 +80,7 @@ export const buildGitStack = async (path: string, options: BuildGitStackOptions)
                 git_provider: (options as GitStackStandaloneConfig).git_provider,
                 git_account: (options as GitStackStandaloneConfig).git_account,
                 repo: (options as GitStackStandaloneConfig).repo,
+                run_directory: hostParentPath !== undefined ? join(hostParentPath, pathInfo.name) : undefined
             }
         )
     }
@@ -89,8 +93,6 @@ export const buildGitStack = async (path: string, options: BuildGitStackOptions)
             name: pathInfo.name,
             config: {
                 server,
-                run_directory: inMonorepo ? pathInfo.name : undefined,
-                files_on_host: true,
                 registry_account: imageRegistryAccount,
                 registry_provider: imageRegistryProvider,
                 auto_update: autoUpdate,
@@ -101,14 +103,14 @@ export const buildGitStack = async (path: string, options: BuildGitStackOptions)
 
         const composePaths = await selectComposeFiles(composeFileGlob, path, logger);
         if(composePaths !== undefined) {
-            stack.config.file_paths = composePaths.map(x => inMonorepo ? join(pathInfo.name, x) : x);
+            stack.config.file_paths = composePaths.map(x => inMonorepo ? join(monoRepoPath, x) : x);
         }
 
         const envFiles = await selectEnvFiles(envFileGlob, path, logger);
         if (envFiles !== undefined) {
             stack.config.env_file_path = komodoEnvName
             logger.info(`Using ${komodoEnvName} for Komodo-written env file`);
-            stack.config.additional_env_files = envFiles.map(x => inMonorepo ? join(pathInfo.name, x) : x);
+            stack.config.additional_env_files = envFiles.map(x => inMonorepo ? join(monoRepoPath, x) : x);
         }
 
         logger.info('Git Stack config complete');

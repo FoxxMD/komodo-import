@@ -6,6 +6,7 @@ export interface FilesOnServerConfig extends CommonImportOptions {
 
 export interface GitStackCommonConfig extends CommonImportOptions {
     inMonorepo?: boolean | string
+    hostParentPath?: string
 }
 
 export interface GitStackStandaloneConfig extends GitStackCommonConfig {
