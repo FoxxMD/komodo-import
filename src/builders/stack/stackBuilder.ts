@@ -4,7 +4,7 @@ import { promises } from 'fs';
 import { dirHasGitConfig, pathExistsAndIsReadable, readDirectories } from "../../common/utils/io.js";
 import { childLogger, Logger } from "@foxxmd/logging";
 import { isUndefinedOrEmptyString, parseBool } from "../../common/utils/utils.js";
-import { detectGitRepo, komodoRepoFromRemote, matchGitDataWithKomodo } from "../../common/utils/git.js";
+import { detectGitRepo, GitRepoData, komodoRepoFromRemote, matchGitDataWithKomodo } from "../../common/utils/git.js";
 import { getDefaultKomodoApi } from "../../common/utils/komodo.js";
 import { buildGitStack } from "./gitStack.js";
 import { join as joinPath, parse, ParsedPath } from 'path';
@@ -47,7 +47,7 @@ export const buildStacksFromPath = async (path: string, options: AnyStackConfig,
     const dirs = await readDirectories(stacksDir);
     const folderPaths = dirs.map(x => joinPath(stacksDir, x));
 
-    let gitData: Awaited<ReturnType<typeof detectGitRepo>>;
+    let gitData: GitRepoData;
     try {
         gitData = await detectGitRepo(path, logger);
     } catch (e) {
@@ -62,7 +62,7 @@ export const buildStacksFromPath = async (path: string, options: AnyStackConfig,
 
     if (gitData !== undefined) {
 
-        logger.info(`Detected top-level dir ${topDir} is a Git repo: Branch ${gitData[0]} | Remote ${gitData[1].remote} | URL ${gitData[1].url}`);
+        logger.info(`Detected top-level dir ${topDir} is a Git repo: Branch ${gitData[0].branch} | Remote ${gitData[1].remote} | URL ${gitData[1].url}`);
         logger.info('Will treat this as a monorepo -- all subfolders will be built as Git-Repo Stacks using the same repo with Run Directory relative to repo root.');
 
         let gitStackConfig: Partial<GitStackConfig> = {

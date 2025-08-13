@@ -7,7 +7,7 @@ import { dirHasGitConfig, findFilesRecurive, readDirectories, sortComposePaths }
 import { stripIndents } from "common-tags";
 import { isDebugMode, removeUndefinedKeys } from "../../common/utils/utils.js";
 import { DEFAULT_COMPOSE_GLOB, DEFAULT_ENV_GLOB, selectComposeFiles, selectEnvFiles } from "./stackUtils.js";
-import { detectGitRepo, komodoRepoFromRemote, matchGitDataWithKomodo, matchRemote, RemoteInfo } from "../../common/utils/git.js";
+import { detectGitRepo, GitRepoData, komodoRepoFromRemote, matchGitDataWithKomodo, matchRemote, RemoteInfo } from "../../common/utils/git.js";
 
 export type BuildGitStackOptions = GitStackConfig & { logger: Logger };
 
@@ -42,7 +42,7 @@ export const buildGitStack = async (path: string, options: BuildGitStackOptions)
             throw new Error('Not a git repo');
         }
 
-        let gitData: Awaited<ReturnType<typeof detectGitRepo>>;
+        let gitData: GitRepoData;
         try {
             gitData = await detectGitRepo(path, logger);
         } catch (e) {
@@ -51,11 +51,11 @@ export const buildGitStack = async (path: string, options: BuildGitStackOptions)
         if(gitData === undefined) {
             throw new Error('Folder has a .git folder but could not find a suitable remote');
         }
-        logger.info(`Folder has tracked branch '${gitData[0]}' with valid remote '${gitData[1].remote}'`)
+        logger.info(`Folder has tracked branch '${gitData[0].branch}' with valid remote '${gitData[1].remote}'`);
 
         const [provider, repo, repoHint] = await matchGitDataWithKomodo(gitData);
         if (repo === undefined) {
-            logger.verbose(`Stack will be built without a linked repo: ${repoHint}`);
+            logger.verbose(`No linked repo because ${repoHint}`);
             const [domain, repo] = komodoRepoFromRemote(gitData[1].url);
             if(repo === undefined) {
                 throw new Error(`Could not parse repo from Remote URL ${gitData[1].url}`);

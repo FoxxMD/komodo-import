@@ -109,7 +109,8 @@ export const matchRemote = async (remote: string, options: Options = {}): Promis
     }
 }
 
-export const detectGitRepo = async (path: string, logger: Logger): Promise<[string, RemoteInfo] | undefined> => {
+export type GitRepoData = [GitBranchStatus, RemoteInfo];
+export const detectGitRepo = async (path: string, logger: Logger): Promise<GitRepoData | undefined> => {
 
     const hasGit = dirHasGitConfig(await readDirectories(path, {hidden: true}));
     if (!hasGit) {
@@ -117,8 +118,8 @@ export const detectGitRepo = async (path: string, logger: Logger): Promise<[stri
     }
     logger.verbose('Detected path has .git folder, trying to parse as git-based stack...');
 
-    let branchData: Awaited<ReturnType<typeof getGitBranch>>;
-    let remote: Awaited<ReturnType<typeof matchRemote>>;
+    let branchData: GitBranchStatus;
+    let remote: RemoteInfo;
 
 
     try {
@@ -140,7 +141,7 @@ export const detectGitRepo = async (path: string, logger: Logger): Promise<[stri
             logger.warn(`No remote '${branchData.remote}' found for tracked branch '${branchData.branch}?? Will fallback to files-on-server mode`);
             return undefined;
         }
-        return [branchData.branch, remote];
+        return [branchData, remote];
     } catch (e) {
         throw new Error(`Detected path ${path} contains .git folder but error occurred while getting git info`, { cause: e });
     }
@@ -165,7 +166,7 @@ export const komodoRepoFromRemote = (remote: string): [string, string?] => {
     return [provider, repo];
 }
 
-export const matchGitDataWithKomodo = async (gitData: Awaited<ReturnType<typeof detectGitRepo>>): Promise<[GitProviderAccount?, RepoListItem?, string?]> => {
+export const matchGitDataWithKomodo = async (gitData: GitRepoData): Promise<[GitProviderAccount?, RepoListItem?, string?]> => {
     const repos = await getDefaultKomodoApi().getRepos();
 
     let provider: GitProviderAccount;
@@ -176,7 +177,7 @@ export const matchGitDataWithKomodo = async (gitData: Awaited<ReturnType<typeof 
         gitData[1].url.toLocaleLowerCase().includes(x.info.repo.toLocaleLowerCase()) 
     && gitData[1].url.toLocaleLowerCase().includes(x.info.git_provider.toLocaleLowerCase()));
     if (validRepos.length !== 0) {
-        const branchAndRepo = validRepos.find(x => x.info.branch.toLocaleLowerCase() === gitData[0].toLocaleLowerCase());
+        const branchAndRepo = validRepos.find(x => x.info.branch.toLocaleLowerCase() === gitData[0].remoteBranch.toLocaleLowerCase());
         if (branchAndRepo === undefined) {
             repoHint = `Komodo Repos exist but branches (${validRepos.map(x => `${x.info.branch} on ${x.name}`).join(',')}) does not match`;
         } else {
