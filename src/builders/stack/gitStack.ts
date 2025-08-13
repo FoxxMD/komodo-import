@@ -22,7 +22,7 @@ export const buildGitStack = async (path: string, options: BuildGitStackOptions)
         autoUpdate = false,
         pollForUpdate = false,
         server,
-        inMonorepo,
+        inMonorepo = false,
         hostParentPath
     } = options
 
