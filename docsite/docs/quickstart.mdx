@@ -26,11 +26,17 @@ import TabItem from '@theme/TabItem';
 
 You want to import all of the existing compose projects into Komodo as [Files On Server](../usage/overview#files-on-server) [Stacks](https://komo.do/docs/resources#stack) attached to `my-cool-server`.
 
+:::tip
+
+Using git repositories instead of plain folders? Check out the [Git Repo Stack docs](../usage/overview#git-repo)
+
+:::
+
 ## Create Docker Compose File
 
 Use the [example `compose.yaml` file from the repository](https://github.com/FoxxMD/komodo-import/blob/main/compose.yaml) as a starting point.
 
-* Bind `/home/myUser/homelab/` into the container at `/filesOnServer` so Komodo Import can scan the parent folder
+* Bind `/home/myUser/homelab/` into the container at `/filesOnServer` so Komodo Import can scan the parent folder (this is the same for plain folder and git repo stack methods)
 * Define `HOST_PARENT_PATH=/home/myUser/homelab` so Komodo Import knows how to create Run Directory in a Komodo Stack correctly
 
 ```yaml
@@ -52,9 +58,11 @@ services:
     restart: no
 ```
 
+## Choose Desired Output
+
 <Tabs groupId="output" queryString>
 <TabItem value="console" label="Console">
-  This [Output](../usage/overview#outputs) write renders the Sync Resource TOML to docker logs. Run komodo-import with `--no-log-prefix` to get the generated TOML output for a Sync Resource.
+  This [Output](../usage/overview#outputs) renders the Sync Resource TOML to docker logs. Run komodo-import with `--no-log-prefix` to get the generated TOML output for a Sync Resource.
 
   ```shell
   docker compose up --no-log-prefix
@@ -116,7 +124,9 @@ additional_env_files = [ ".env" ]
 [2025-08-11 14:06:19.119 -0400] INFO   : [App] Done!
 ```
 
-Now [manually create a Sync Resource](../usage/resourceSync#create-sync-resource) and Execute to import your projects.
+Now, [manually create a Sync Resource](../usage/resourceSync#create-sync-resource) and Execute to import your projects.
+
+Or, use [Sync Api](./?output=sync-api#choose-desired-output) output instead to directly write the Sync Resource to Komodo.
 </TabItem>
 <TabItem value="sync-api" label="Sync API">
 
