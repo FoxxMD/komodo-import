@@ -30,9 +30,11 @@ export const buildGitStack = async (path: string, options: BuildGitStackOptions)
 
     const pathInfo: ParsedPath = parse(path);
 
-    const monoRepoPath = inMonorepo ? (hostParentPath !== undefined ? join(hostParentPath, pathInfo.name) : undefined) : undefined;
+    const folderName = `${pathInfo.name}${pathInfo.ext !== '' ? pathInfo.ext : ''}`;
 
-    const logger = childLogger(options.logger, [pathInfo.name, 'Git']);
+    const monoRepoPath = inMonorepo ? (hostParentPath !== undefined ? join(hostParentPath, folderName) : undefined) : undefined;
+
+    const logger = childLogger(options.logger, [folderName, 'Git']);
 
     if (inMonorepo === false) {
 
@@ -80,7 +82,7 @@ export const buildGitStack = async (path: string, options: BuildGitStackOptions)
                 git_provider: (options as GitStackStandaloneConfig).git_provider,
                 git_account: (options as GitStackStandaloneConfig).git_account,
                 repo: (options as GitStackStandaloneConfig).repo,
-                run_directory: hostParentPath !== undefined ? join(hostParentPath, pathInfo.name) : undefined
+                run_directory: hostParentPath !== undefined ? join(hostParentPath, folderName) : undefined
             }
         )
     }
@@ -90,7 +92,7 @@ export const buildGitStack = async (path: string, options: BuildGitStackOptions)
 
     try {
         stack = {
-            name: pathInfo.name,
+            name: folderName,
             config: {
                 server,
                 registry_account: imageRegistryAccount,
@@ -118,7 +120,7 @@ export const buildGitStack = async (path: string, options: BuildGitStackOptions)
         return removeUndefinedKeys(stack);
     } catch (e) {
         logJson = true;
-        throw new Error(`Error occurred while processing Git Stack for folder ${pathInfo.name}`, { cause: e });
+        throw new Error(`Error occurred while processing Git Stack for folder ${folderName}`, { cause: e });
     } finally {
         if (logJson) {
             logger.debug(`Stack Config: ${JSON.stringify(stack)}}`);
