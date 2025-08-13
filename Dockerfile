@@ -1,6 +1,6 @@
 FROM node:22-alpine as base
 
-RUN apk add --no-cache dumb-init
+RUN apk add --no-cache dumb-init git
 
 RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 
