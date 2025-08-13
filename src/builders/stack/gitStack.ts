@@ -7,7 +7,7 @@ import { dirHasGitConfig, findFilesRecurive, readDirectories, sortComposePaths }
 import { stripIndents } from "common-tags";
 import { isDebugMode, removeUndefinedKeys } from "../../common/utils/utils.js";
 import { DEFAULT_COMPOSE_GLOB, DEFAULT_ENV_GLOB, selectComposeFiles, selectEnvFiles } from "./stackUtils.js";
-import { detectGitRepo, komodoRepoFromRemoteAndDomain, matchGitDataWithKomodo, matchRemote, RemoteInfo } from "../../common/utils/git.js";
+import { detectGitRepo, komodoRepoFromRemote, matchGitDataWithKomodo, matchRemote, RemoteInfo } from "../../common/utils/git.js";
 
 export type BuildGitStackOptions = GitStackConfig & { logger: Logger };
 
@@ -51,10 +51,16 @@ export const buildGitStack = async (path: string, options: BuildGitStackOptions)
         const [provider, repo, repoHint] = await matchGitDataWithKomodo(gitData);
         if (repo === undefined) {
             logger.verbose(`Stack will be built without a linked repo: ${repoHint}`);
-            const repo = komodoRepoFromRemoteAndDomain(provider?.domain ?? 'github.com', gitData[1].url);
-            logger.debug(`Parsed Repo '${repo}' from Remote URL ${gitData[1].url}`);
+            const [domain, repo] = komodoRepoFromRemote(gitData[1].url);
+            if(repo === undefined) {
+                throw new Error(`Could not parse repo from Remote URL ${gitData[1].url}`);
+            }
+            logger.debug(`Parsed Repo '${repo}' with ${provider?.domain !== undefined ? `provider` : 'URL'} domain '${provider?.domain ?? domain}' from Remote URL ${gitData[1].url}`);
+            if(provider?.username !== undefined) {
+                logger.debug(`Using provider username ${provider.username}`);
+            }
             gitStackConfig = {
-                git_provider: provider?.domain,
+                git_provider: provider?.domain ?? domain,
                 git_account: provider?.username,
                 repo
             };

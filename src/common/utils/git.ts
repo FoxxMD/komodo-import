@@ -146,19 +146,23 @@ export const detectGitRepo = async (path: string, logger: Logger): Promise<[stri
     }
 }
 
-export const komodoRepoFromRemoteAndDomain = (domain: string, remote: string): string | undefined => {
-    const broken = remote.split(domain);
-    if (broken.length < 2) {
-        return undefined;
+const GIT_EXTENSION = new RegExp(/\.git$/);
+
+export const komodoRepoFromRemote = (remote: string): [string, string?] => {
+    const u = new URL(remote);
+    const provider = u.host;
+    // this shouldn't happen
+    if(u.pathname === '/') {
+        return [provider];
     }
-    let cleaned = broken[1].replace('.git', '');
-    if (cleaned[0] === '/') {
-        cleaned = cleaned.substring(1);
+    let repo: string = u.pathname.replace(GIT_EXTENSION, '');
+    if (repo[0] === '/') {
+        repo = repo.substring(1);
     }
-    if (cleaned[cleaned.length - 1] === '/') {
-        cleaned = cleaned.substring(0, cleaned.length - 1);
+    if (repo[repo.length - 1] === '/') {
+        repo = repo.substring(0, repo.length - 1);
     }
-    return cleaned;
+    return [provider, repo];
 }
 
 export const matchGitDataWithKomodo = async (gitData: Awaited<ReturnType<typeof detectGitRepo>>): Promise<[GitProviderAccount?, RepoListItem?, string?]> => {
@@ -181,12 +185,7 @@ export const matchGitDataWithKomodo = async (gitData: Awaited<ReturnType<typeof 
 
     const providers = await getDefaultKomodoApi().getGitProviders();
     const validProvider = providers.find(x => gitData[1].url.includes(x.domain));
-    if (validProvider === undefined) {
-        // default provider, we don't need to find an added one
-        if (!gitData[1].url.includes('github.com')) {
-            throw new Error(`No Komodo Git Account provider matches remote ${gitData[1].url}`);
-        }
-    } else {
+    if (validProvider !== undefined) {
         provider = validProvider;
     }
     return [provider, repo, repoHint];

@@ -4,7 +4,7 @@ import { promises } from 'fs';
 import { dirHasGitConfig, pathExistsAndIsReadable, readDirectories } from "../../common/utils/io.js";
 import { childLogger, Logger } from "@foxxmd/logging";
 import { isUndefinedOrEmptyString, parseBool } from "../../common/utils/utils.js";
-import { detectGitRepo, komodoRepoFromRemoteAndDomain, matchGitDataWithKomodo } from "../../common/utils/git.js";
+import { detectGitRepo, komodoRepoFromRemote, matchGitDataWithKomodo } from "../../common/utils/git.js";
 import { getDefaultKomodoApi } from "../../common/utils/komodo.js";
 import { buildGitStack } from "./gitStack.js";
 import { join as joinPath, parse, ParsedPath } from 'path';
@@ -58,21 +58,22 @@ export const buildStacksFromPath = async (path: string, options: AnyStackConfig,
             inMonorepo: true
         }
         try {
-            const [provider, repo, repoHint] = await matchGitDataWithKomodo(gitData);
+            const [provider, linkedRepo, repoHint] = await matchGitDataWithKomodo(gitData);
             if (repoHint !== undefined) {
                 logger.warn(`All Stacks will be built without a linked repo: ${repoHint}}`);
             }
+            const [domain, repo] = komodoRepoFromRemote(gitData[1].remote)
             if (repo === undefined) {
                 gitStackConfig = {
                     ...options,
-                    git_provider: provider?.domain,
+                    git_provider: provider?.domain ?? domain,
                     git_account: provider?.username,
-                    repo: komodoRepoFromRemoteAndDomain(provider?.domain ?? 'github.com', gitData[1].remote)
+                    repo
                 };
             } else {
                 gitStackConfig = {
                     ...options,
-                    linked_repo: repo.name,
+                    linked_repo: linkedRepo.name,
                 }
             }
         } catch (e) {
