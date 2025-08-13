@@ -33,7 +33,7 @@ export const buildGitStack = async (path: string, options: BuildGitStackOptions)
 
     if (inMonorepo === false) {
 
-        if(!dirHasGitConfig(await readDirectories(path))) {
+        if(!dirHasGitConfig(await readDirectories(path, {hidden: true}))) {
             throw new Error('Not a git repo');
         }
 

@@ -103,10 +103,22 @@ export const sortComposePaths = (p: string[]): string[] => {
     return paths;
 }
 
-export const readDirectories = async (path: string): Promise<string[]> => {
+export interface ReadDirectoryOptions {
+    hidden?: boolean
+}
+export const readDirectories = async (path: string, options: ReadDirectoryOptions = {}): Promise<string[]> => {
+    const {hidden = false} = options
     try {
         const directories = (await promises.readdir(path, { withFileTypes: true }))
-            .filter(dirent => dirent.isDirectory())
+            .filter(dirent => {
+                if(!dirent.isDirectory()) {
+                    return false;
+                }
+                if(!hidden && dirent.name[0] === '.') {
+                    return false;
+                }
+                return true;
+            })
             .map(dir => dir.name);
         return directories;
     } catch (e) {

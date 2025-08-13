@@ -111,7 +111,7 @@ export const matchRemote = async (remote: string, options: Options = {}): Promis
 
 export const detectGitRepo = async (path: string, logger: Logger): Promise<[string, RemoteInfo] | undefined> => {
 
-    const hasGit = dirHasGitConfig(await readDirectories(path));
+    const hasGit = dirHasGitConfig(await readDirectories(path, {hidden: true}));
     if (!hasGit) {
         return undefined;
     }
@@ -172,9 +172,11 @@ export const matchGitDataWithKomodo = async (gitData: Awaited<ReturnType<typeof 
     let repo: RepoListItem;
     let repoHint: string = 'No Komodo Repo matches the remote';
 
-    const validRepos = repos.filter(x => gitData[1].url.includes(x.info.repo) && gitData[1].url.includes(x.info.git_provider));
+    const validRepos = repos.filter(x => 
+        gitData[1].url.toLocaleLowerCase().includes(x.info.repo.toLocaleLowerCase()) 
+    && gitData[1].url.toLocaleLowerCase().includes(x.info.git_provider.toLocaleLowerCase()));
     if (validRepos.length !== 0) {
-        const branchAndRepo = validRepos.find(x => x.info.branch === gitData[0]);
+        const branchAndRepo = validRepos.find(x => x.info.branch.toLocaleLowerCase() === gitData[0].toLocaleLowerCase());
         if (branchAndRepo === undefined) {
             repoHint = `Komodo Repos exist but branches (${validRepos.map(x => `${x.info.branch} on ${x.name}`).join(',')}) does not match`;
         } else {

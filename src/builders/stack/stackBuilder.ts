@@ -60,9 +60,9 @@ export const buildStacksFromPath = async (path: string, options: AnyStackConfig,
         try {
             const [provider, linkedRepo, repoHint] = await matchGitDataWithKomodo(gitData);
             if (repoHint !== undefined) {
-                logger.warn(`All Stacks will be built without a linked repo: ${repoHint}}`);
+                logger.warn(`All Stacks will be built without a linked repo: ${repoHint}`);
             }
-            const [domain, repo] = komodoRepoFromRemote(gitData[1].remote)
+            const [domain, repo] = komodoRepoFromRemote(gitData[1].url)
             if (repo === undefined) {
                 gitStackConfig = {
                     ...options,
