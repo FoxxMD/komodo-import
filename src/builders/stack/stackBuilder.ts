@@ -11,6 +11,7 @@ import { join as joinPath, parse, ParsedPath } from 'path';
 import { DEFAULT_COMPOSE_GLOB, DEFAULT_ENV_GLOB } from "./stackUtils.js";
 import { GitProviderAccount, RepoListItem } from "komodo_client/dist/types.js";
 import { buildFileStack } from "./filesOnServer.js";
+import { SimpleError } from "../../common/errors.js";
 
 export const buildStacksFromPath = async (path: string, options: AnyStackConfig, parentLogger: Logger): Promise<TomlStack[]> => {
 
@@ -51,7 +52,11 @@ export const buildStacksFromPath = async (path: string, options: AnyStackConfig,
     try {
         gitData = await detectGitRepo(path, logger);
     } catch (e) {
-        throw e;
+        if (e instanceof SimpleError) {
+            logger.debug(e.message);
+        } else {
+            throw e;
+        }
     }
 
     logger.info(`Processing Stacks for ${dirs.length} folders in ${stacksDir}:\n${dirs.join('\n')}`);
@@ -107,8 +112,8 @@ export const buildStacksFromPath = async (path: string, options: AnyStackConfig,
 
         if (gitData !== undefined) {
             try {
-                stacks.push(await buildGitStack(f, 
-                    { 
+                stacks.push(await buildGitStack(f,
+                    {
                         ...stackOptions,
                         logger,
                         hostParentPath: stacksDir === topDir ? undefined : stacksDir.replace(topDir, '').replace(/^\//, '')
@@ -122,10 +127,12 @@ export const buildStacksFromPath = async (path: string, options: AnyStackConfig,
                 stacks.push(await buildGitStack(f, { inMonorepo: false, ...options, logger }));
                 continue;
             } catch (e) {
-                if (e.message === 'Not a git repo') {
-                    folderLogger.debug('Not a git repo, switching to Files-On-Server');
-                } else if (e.message === 'Folder has a .git folder but could not find a suitable remote') {
-                    folderLogger.verbose('Folder has a .git folder but could not find a suitable remote, falling back to Files-On-Server');
+                if (e instanceof SimpleError) {
+                    if (e.message.includes('does not have a .git folder')) {
+                        folderLogger.debug('Falling back to Files-On-Server, not a git repo');
+                    } else {
+                        folderLogger.verbose(`Falling back to Files-On-Server => ${e.message}`);
+                    }
                 } else {
                     folderLogger.error(new Error(`Unable to build Git Stack for folder ${f}`, { cause: e }));
                     continue;

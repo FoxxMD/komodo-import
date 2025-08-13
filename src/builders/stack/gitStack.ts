@@ -8,6 +8,7 @@ import { stripIndents } from "common-tags";
 import { isDebugMode, removeUndefinedKeys } from "../../common/utils/utils.js";
 import { DEFAULT_COMPOSE_GLOB, DEFAULT_ENV_GLOB, selectComposeFiles, selectEnvFiles } from "./stackUtils.js";
 import { detectGitRepo, GitRepoData, komodoRepoFromRemote, matchGitDataWithKomodo, matchRemote, RemoteInfo } from "../../common/utils/git.js";
+import { SimpleError } from "../../common/errors.js";
 
 export type BuildGitStackOptions = GitStackConfig & { logger: Logger };
 
@@ -38,18 +39,15 @@ export const buildGitStack = async (path: string, options: BuildGitStackOptions)
 
     if (inMonorepo === false) {
 
-        if(!dirHasGitConfig(await readDirectories(path, {hidden: true}))) {
-            throw new Error('Not a git repo');
-        }
-
         let gitData: GitRepoData;
         try {
-            gitData = await detectGitRepo(path, logger);
+            gitData = await detectGitRepo(path);
         } catch (e) {
-            throw new Error(`Unable to parse git info in folder`, { cause: e });
-        }
-        if(gitData === undefined) {
-            throw new Error('Folder has a .git folder but could not find a suitable remote');
+            if(e instanceof SimpleError) {
+                throw new SimpleError(`Unable to parse path as git repo: ${e.message}`);
+            } else {
+                throw e;
+            }
         }
         logger.info(`Folder has tracked branch '${gitData[0].branch}' with valid remote '${gitData[1].remote}'`);
 

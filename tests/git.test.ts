@@ -1,6 +1,6 @@
 import { describe, it } from 'mocha';
 import chai, { expect } from 'chai';
-import { parseGitStatus } from '../src/common/utils/git.js';
+import { detectGitRepo, parseGitStatus } from '../src/common/utils/git.js';
 import { stripIndents } from 'common-tags';
 import withLocalTmpDir from 'with-local-tmp-dir';
 import { mkdir, writeFile, chmod, constants } from 'node:fs/promises';
@@ -120,7 +120,7 @@ describe('#Git', function () {
                 const dir = path.join(process.cwd(), 'test_1');
 
                 await mkdir(dir);
-                await expect(buildGitStack(dir, defaultGitStandaloneConfig)).to.eventually.be.rejected;
+                await expect(detectGitRepo(dir)).to.eventually.be.rejected;
             }, { unsafeCleanup: true });
         });
 
@@ -129,7 +129,16 @@ describe('#Git', function () {
                 const dir = path.join(process.cwd(), 'test_1');
                 await mkdir(dir, { recursive: true });
                 await mkdir(path.join(dir, '.git'))
-                await expect(buildGitStack(dir, defaultGitStandaloneConfig)).to.eventually.be.rejected;
+                await expect(detectGitRepo(dir)).to.eventually.be.rejected;
+            }, { unsafeCleanup: true });
+        });
+
+        it(`detects as not a suitable git repo when no tracked branch`, async function () {
+            await withLocalTmpDir(async () => {
+                const dir = path.join(process.cwd(), 'test_1');
+                await mkdir(dir, { recursive: true });
+                await git.init({ fs, dir });
+                await expect(detectGitRepo(dir)).to.eventually.be.rejectedWith(/Could not determine tracked branch/);
             }, { unsafeCleanup: true });
         });
 
@@ -138,7 +147,16 @@ describe('#Git', function () {
                 const dir = path.join(process.cwd(), 'test_1');
                 await mkdir(dir, { recursive: true });
                 await git.init({ fs, dir });
-                await expect(buildGitStack(dir, defaultGitStandaloneConfig)).to.eventually.be.rejectedWith('Folder has a .git folder but could not find a suitable remote');
+                await git.commit({
+                    fs,
+                    dir: dir,
+                    author: {
+                        name: 'Mr. Test',
+                        email: 'mrtest@example.com',
+                    },
+                    message: 'Added the a.txt file'
+                });
+                await expect(detectGitRepo(dir)).to.eventually.be.rejectedWith(/Could not parse remote branch/);
             }, { unsafeCleanup: true });
         });
 
@@ -159,7 +177,7 @@ describe('#Git', function () {
                         email: 'mrtest@example.com',
                     },
                     message: 'Added the a.txt file'
-                })
+                });
                 await git.init({ fs, dir: remoteDir });
                 await git.addRemote({
                     fs,
@@ -167,7 +185,7 @@ describe('#Git', function () {
                     url: '../remote',
                     dir: remoteDir
                 });
-                await expect(buildGitStack(localDir, defaultGitStandaloneConfig)).to.eventually.be.rejectedWith('Folder has a .git folder but could not find a suitable remote');
+                await expect(detectGitRepo(localDir)).to.eventually.be.rejectedWith(/Could not parse remote branch/);
             }, { unsafeCleanup: true });
         });
 
@@ -192,7 +210,7 @@ describe('#Git', function () {
                 // cannot yet clone local repo with isomorphic git
                 // https://github.com/isomorphic-git/isomorphic-git/issues/1263
                 await execa({cwd: dir})`git clone remote local`
-                await expect(buildGitStack(localDir, defaultGitStandaloneConfig)).to.eventually.be.fulfilled;
+                await expect(detectGitRepo(localDir)).to.eventually.be.fulfilled;
             }, { unsafeCleanup: true });
         });
     });

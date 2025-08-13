@@ -6,6 +6,7 @@ import { GitProviderAccount, RepoListItem } from 'komodo_client/dist/types.js';
 import { getDefaultKomodoApi } from './komodo.js';
 import { GitBranchStatus } from '../infrastructure/atomic.js';
 import { isDebugMode } from './utils.js';
+import { SimpleError } from '../errors.js';
 
 /*
  * Would have preferred to use something like isomorphic-git, or another *tested* library, to get this info
@@ -110,40 +111,35 @@ export const matchRemote = async (remote: string, options: Options = {}): Promis
 }
 
 export type GitRepoData = [GitBranchStatus, RemoteInfo];
-export const detectGitRepo = async (path: string, logger: Logger): Promise<GitRepoData | undefined> => {
+export const detectGitRepo = async (path: string): Promise<GitRepoData> => {
 
     const hasGit = dirHasGitConfig(await readDirectories(path, {hidden: true}));
     if (!hasGit) {
-        return undefined;
+        throw new SimpleError('Path does not have a .git folder');
     }
-    logger.verbose('Detected path has .git folder, trying to parse as git-based stack...');
 
     let branchData: GitBranchStatus;
     let remote: RemoteInfo;
 
-
     try {
         branchData = await getGitBranch({ cwd: path });
-        if (isDebugMode()) {
-            logger.debug(`git status -sb => ${branchData.raw}`);
-        }
 
         if (branchData.branch === undefined && branchData.remote === undefined) {
-            logger.debug(`Could not determine tracked branch | Raw Output: ${branchData.raw.split('\n')[0]}`);
-            return undefined;
+            throw new SimpleError(`Could not determine tracked branch | Raw Output: ${branchData.raw.split('\n')[0]}`);
         }
         if (branchData.remote === undefined) {
-            logger.debug(`Could not parse remote branch for tracked branch '${branchData.branch}' | Raw Output: ${branchData.raw.split('\n')[0]}`);
-            return undefined;
+            throw new SimpleError(`Could not parse remote branch for tracked branch '${branchData.branch}' | Raw Output: ${branchData.raw.split('\n')[0]}`);
         }
         remote = await matchRemote(branchData.remote, { cwd: path });
         if (remote === undefined) {
-            logger.warn(`No remote '${branchData.remote}' found for tracked branch '${branchData.branch}?? Will fallback to files-on-server mode`);
-            return undefined;
+            throw new SimpleError(`No remote '${branchData.remote}' found for tracked branch '${branchData.branch} | Raw Output: ${branchData.raw.split('\n')[0]}`);
         }
         return [branchData, remote];
     } catch (e) {
-        throw new Error(`Detected path ${path} contains .git folder but error occurred while getting git info`, { cause: e });
+        if(e instanceof SimpleError) {
+            throw e;
+        }
+        throw new Error(`Detected path ${path} contains .git folder but error occurred while getting git info${branchData !== undefined ? ` | Raw Output: ${branchData.raw.split('\n')[0]}` : ''}`, { cause: e });
     }
 }
 
