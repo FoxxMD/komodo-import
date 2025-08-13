@@ -7,6 +7,7 @@ import { getDefaultKomodoApi } from './komodo.js';
 import { GitBranchStatus } from '../infrastructure/atomic.js';
 import { isDebugMode } from './utils.js';
 import { SimpleError } from '../errors.js';
+import { projectDir } from '../index.js';
 
 /*
  * Would have preferred to use something like isomorphic-git, or another *tested* library, to get this info
@@ -15,7 +16,13 @@ import { SimpleError } from '../errors.js';
 
 export const getGitBranch = async (options: Options = {}): Promise<GitBranchStatus> => {
     try {
-        const res = await execa({ cwd: process.cwd(), ...options })`git status -sb`;
+        const res = await execa({
+            env: {
+                // https://stackoverflow.com/a/27180519/1469797
+                GIT_CEILING_DIRECTORIES: projectDir
+            },
+             cwd: process.cwd(), ...options 
+            })`git status -sb`;
         const statusResults = parseGitStatus(res.stdout as string);
         statusResults.raw = statusResults.raw.split('\n')[0];
         return statusResults;
