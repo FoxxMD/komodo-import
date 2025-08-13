@@ -1,15 +1,13 @@
-import { AnyStackConfig, FilesOnServerConfig, GitStackCommonConfig, GitStackConfig, GitStackLinkedConfig } from "../../common/infrastructure/config/stackConfig.js";
+import { AnyStackConfig, FilesOnServerConfig, GitStackConfig } from "../../common/infrastructure/config/stackConfig.js";
 import { TomlStack } from "../../common/infrastructure/tomlObjects.js";
 import { promises } from 'fs';
-import { dirHasGitConfig, pathExistsAndIsReadable, readDirectories } from "../../common/utils/io.js";
+import {  pathExistsAndIsReadable, readDirectories } from "../../common/utils/io.js";
 import { childLogger, Logger } from "@foxxmd/logging";
 import { isUndefinedOrEmptyString, parseBool } from "../../common/utils/utils.js";
 import { detectGitRepo, GitRepoData, komodoRepoFromRemote, matchGitDataWithKomodo } from "../../common/utils/git.js";
-import { getDefaultKomodoApi } from "../../common/utils/komodo.js";
 import { buildGitStack } from "./gitStack.js";
 import { join as joinPath, parse, ParsedPath } from 'path';
 import { DEFAULT_COMPOSE_GLOB, DEFAULT_ENV_GLOB } from "./stackUtils.js";
-import { GitProviderAccount, RepoListItem } from "komodo_client/dist/types.js";
 import { buildFileStack } from "./filesOnServer.js";
 import { SimpleError } from "../../common/errors.js";
 
@@ -50,7 +48,7 @@ export const buildStacksFromPath = async (path: string, options: AnyStackConfig,
 
     let gitData: GitRepoData;
     try {
-        gitData = await detectGitRepo(path, logger);
+        gitData = await detectGitRepo(path);
     } catch (e) {
         if (e instanceof SimpleError) {
             logger.debug(e.message);
