@@ -26,18 +26,20 @@ export const buildFileStack = async (path: string, options: BuildFileStackOption
 
     const pathInfo: ParsedPath = parse(path);
 
-    const logger = childLogger(options.logger, [pathInfo.name, 'Files On Server']);
-    logger.info(`Found Stack '${pathInfo.name}' at dir ${path}`);
+    const folderName = `${pathInfo.name}${pathInfo.ext !== '' ? pathInfo.ext : ''}`;
+
+    const logger = childLogger(options.logger, [folderName, 'Files On Server']);
+    logger.info(`Found Stack '${folderName}' at dir ${path}`);
 
     let stack: TomlStack;
     let logJson = isDebugMode();
 
     try {
         stack = {
-            name: pathInfo.name,
+            name: folderName,
             config: {
                 server,
-                run_directory: join(hostParentPath, pathInfo.name),
+                run_directory: join(hostParentPath, folderName),
                 files_on_host: true,
                 registry_account: imageRegistryAccount,
                 registry_provider: imageRegistryProvider,
@@ -60,7 +62,7 @@ export const buildFileStack = async (path: string, options: BuildFileStackOption
         return removeUndefinedKeys(stack);
     } catch (e) {
         logJson = true;
-        throw new Error(`Error occurred while processing Stack for folder ${pathInfo.name}`, {cause: e});
+        throw new Error(`Error occurred while processing Stack for folder ${folderName}`, {cause: e});
     } finally {
         if(logJson) {
             logger.debug(`Stack Config: ${JSON.stringify(stack)}}`);

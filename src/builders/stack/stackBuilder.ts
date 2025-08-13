@@ -103,7 +103,7 @@ export const buildStacksFromPath = async (path: string, options: AnyStackConfig,
     for (const f of folderPaths) {
 
         const pathInfo: ParsedPath = parse(f);
-        const folderLogger = childLogger(logger, pathInfo.name);
+        const folderLogger = childLogger(logger, `${pathInfo.name}${pathInfo.ext !== '' ? pathInfo.ext : ''}`);
 
         if (gitData !== undefined) {
             try {
