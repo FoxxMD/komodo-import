@@ -50,8 +50,8 @@ export const buildStacksFromPath = async (path: string, options: AnyStackConfig,
     let stacksDir: string = topDir;
     if (!isUndefinedOrEmptyString(process.env.GIT_STACKS_DIR) && gitData !== undefined) {
         try {
-            stacksDir = await promises.realpath(process.env.GIT_STACKS_DIR);
-            logger.info(`Git Stack Dir: ${stacksDir} -> Resolved: ${stacksDir}`);
+            stacksDir = await promises.realpath(joinPath(topDir, process.env.GIT_STACKS_DIR));
+            logger.info(`Git Stack Dir: ${process.env.GIT_STACKS_DIR} -> Resolved: ${stacksDir}`);
             pathExistsAndIsReadable(stacksDir)
         } catch (e) {
             throw new Error(`Could not access ${stacksDir}.${parseBool(process.env.IS_DOCKER) ? ' This is the path *in container* that is read so make sure you have mounted it on the host!' : ''}`);
@@ -102,7 +102,7 @@ export const buildStacksFromPath = async (path: string, options: AnyStackConfig,
         stackOptions = {
             ...stackOptions,
             ...gitStackConfig,
-            writeEnv: parseBool(process.env.GIT_WRITE_ENV, false),
+            writeEnv: parseBool(process.env.WRITE_ENV, false),
             inMonorepo: true
         }
     }
@@ -128,7 +128,7 @@ export const buildStacksFromPath = async (path: string, options: AnyStackConfig,
             try {
                 stacks.push(await buildGitStack(f, {
                     inMonorepo: false,
-                    writeEnv: parseBool(process.env.GIT_WRITE_ENV, false),
+                    writeEnv: parseBool(process.env.WRITE_ENV, false),
                     ...options,
                     logger
                 }));
