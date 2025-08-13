@@ -6,18 +6,17 @@ import path from 'path';
 import dayjs from 'dayjs';
 import timezone from 'dayjs/plugin/timezone.js';
 import utc from 'dayjs/plugin/utc.js';
-import { promises } from 'fs';
 import { isDebugMode, parseBool } from './common/utils/utils.js';
 import { parse, stringify } from 'smol-toml';
-import { fileOrDirectoryIsWriteable, pathExistsAndIsReadable, readDirectories, writeFile } from './common/utils/io.js';
 import { _PartialStackConfig } from 'komodo_client/dist/types.js';
 import { TomlStack } from './common/infrastructure/tomlObjects.js';
-import { buildFileStack, buildFileStacks } from './builders/stack/filesOnServer.js';
 import { CommonImportOptions } from './common/infrastructure/config/common.js';
-import { FilesOnServerConfig } from './common/infrastructure/config/filesOnServer.js';
+import { FilesOnServerConfig } from './common/infrastructure/config/stackConfig.js';
 import { exportToLog } from './exporters/exportToLog.js';
 import { exportToFile } from './exporters/exportToFile.js';
 import { exportToSync } from './exporters/exportToApiSync.js';
+import { getDefaultKomodoApi } from './common/utils/komodo.js';
+import { buildStacksFromPath } from './builders/stack/stackBuilder.js';
 
 dayjs.extend(utc)
 dayjs.extend(timezone);
@@ -55,6 +54,8 @@ try {
 
     logger.info(`Version: ${version}`);
 
+    getDefaultKomodoApi(logger);
+
     const importOptions: CommonImportOptions = {
         server: process.env.SERVER_NAME,
         imageRegistryProvider: process.env.IMAGE_REGISTRY_PROVIDER,
@@ -76,32 +77,8 @@ try {
         hostParentPath: process.env.HOST_PARENT_PATH
     };
 
-    if (filesOnServerConfig.hostParentPath === undefined || filesOnServerConfig.hostParentPath.trim() === '') {
-        logger.error('ENV HOST_PARENT_PATH must be set');
-        process.exit(1);
-    }
-
-    if (process.env.FILES_ON_SERVER_DIR === undefined || process.env.FILES_ON_SERVER_DIR.trim() === '') {
-        logger.error('ENV FILES_ON_SERVER_DIR must be set');
-        process.exit(1);
-    }
-
-    let FILES_ON_SERVER_DIR = process.env.FILES_ON_SERVER_DIR;
-    try {
-        FILES_ON_SERVER_DIR = await promises.realpath(process.env.FILES_ON_SERVER_DIR);
-        logger.info(`Files On Server Dir ENV: ${process.env.FILES_ON_SERVER_DIR} -> Resolved: ${FILES_ON_SERVER_DIR}`);
-        pathExistsAndIsReadable(FILES_ON_SERVER_DIR)
-    } catch (e) {
-        logger.error(`Could not access ${FILES_ON_SERVER_DIR}.${parseBool(process.env.IS_DOCKER) ? ' This is the path *in container* that is read so make sure you have mounted it on the host!' : ''}`);
-        logger.error(e);
-        process.exit(1);
-    }
-
-    const dirs = await readDirectories(FILES_ON_SERVER_DIR);
-
     let stacks: TomlStack[] = [];
-    const folderPaths = dirs.map(x => path.join(FILES_ON_SERVER_DIR, x));
-    stacks = await buildFileStacks(folderPaths, { ...filesOnServerConfig, logger });
+    stacks = await buildStacksFromPath(process.env.FILES_ON_SERVER_DIR, filesOnServerConfig, logger);
 
     if (stacks.length === 0) {
         logger.info('No Stacks found! Nothing to do.');

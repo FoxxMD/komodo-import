@@ -1,13 +1,12 @@
 import { Logger, childLogger } from "@foxxmd/logging";
-import { FilesOnServerConfig } from "../../common/infrastructure/config/filesOnServer.js";
+import { FilesOnServerConfig } from "../../common/infrastructure/config/stackConfig.js";
 import { _PartialStackConfig } from 'komodo_client/dist/types.js';
 import { parse, ParsedPath, sep, join } from 'path';
 import { TomlStack } from "../../common/infrastructure/tomlObjects.js";
-import { findFilesRecurive, sortComposePaths } from "../../common/utils/io.js";
+import { findFilesRecurive, readText, sortComposePaths } from "../../common/utils/io.js";
 import { stripIndents } from "common-tags";
 import { isDebugMode, removeUndefinedKeys } from "../../common/utils/utils.js";
-
-const DEFAULT_COMPOSE_GLOB = '**/{compose,docker-compose}*.y?(a)ml';
+import { DEFAULT_COMPOSE_GLOB, DEFAULT_ENV_GLOB, selectComposeFiles, selectEnvFiles } from "./stackUtils.js";
 
 export type BuildFileStackOptions = FilesOnServerConfig & { logger: Logger };
 
@@ -15,30 +14,33 @@ export const buildFileStack = async (path: string, options: BuildFileStackOption
 
     const {
         composeFileGlob = DEFAULT_COMPOSE_GLOB,
-        envFileGlob = '**/.env',
+        envFileGlob = DEFAULT_ENV_GLOB,
         komodoEnvName = '.komodoEnv',
         imageRegistryAccount,
         imageRegistryProvider,
         autoUpdate = false,
         pollForUpdate = false,
         server,
-        hostParentPath
+        hostParentPath,
+        writeEnv = false,
     } = options;
 
     const pathInfo: ParsedPath = parse(path);
 
-    const logger = childLogger(options.logger, pathInfo.name);
-    logger.info(`Found Stack '${pathInfo.name}' at dir ${path}`);
+    const folderName = `${pathInfo.name}${pathInfo.ext !== '' ? pathInfo.ext : ''}`;
+
+    const logger = childLogger(options.logger, [folderName, 'Files On Server']);
+    logger.info(`Found Stack '${folderName}' at dir ${path}`);
 
     let stack: TomlStack;
     let logJson = isDebugMode();
 
     try {
         stack = {
-            name: pathInfo.name,
+            name: folderName,
             config: {
                 server,
-                run_directory: join(hostParentPath, pathInfo.name),
+                run_directory: join(hostParentPath, folderName),
                 files_on_host: true,
                 registry_account: imageRegistryAccount,
                 registry_provider: imageRegistryProvider,
@@ -47,39 +49,23 @@ export const buildFileStack = async (path: string, options: BuildFileStackOption
             }
         };
 
-        const composeFiles = await findFilesRecurive(composeFileGlob, path);
-        let sorted = [...composeFiles].reverse();
-        if (composeFiles.length === 0) {
-            logger.warn(`Did not find any files patterns matching compose glob`);
-        } else {
-            sorted = sortComposePaths(composeFiles);
-            logger.info(stripIndents`Found ${composeFiles.length} files matching compose glob:
-            ${sorted.join('\n')}`);
+        stack.config.file_paths = await selectComposeFiles(composeFileGlob, path, logger);
 
-            // only take first file if using default
-            if (DEFAULT_COMPOSE_GLOB === composeFileGlob) {
-                stack.config.file_paths = [sorted[0]];
-            } else {
-                // otherwise assume user wants all matched files
-                stack.config.file_paths = sorted;
+        const envFiles = await selectEnvFiles(envFileGlob, path, logger);
+        if (envFiles !== undefined) {
+            if (writeEnv) {
+                logger.verbose('Writing env file(s) contents to Komodo Environmnent');
+                const envContents: string[] = [];
+                for (const f of envFiles) {
+                    envContents.push(await readText(envFiles))
+                }
+                stack.config.environment = envContents.join('\n');
             }
-            
-            if(stack.config.file_paths.length === 1 && stack.config.file_paths[0] === 'compose.yaml') {
-                delete stack.config.file_paths;
-                logger.info(`Using file: compose.yaml but not writing to file_paths since this is the Komodo default`);
-            } else {
-                logger.info(`Using file(s): ${stack.config.file_paths.join('\n')}`);
+            else {
+                stack.config.env_file_path = komodoEnvName
+                logger.info(`Using ${komodoEnvName} for Komodo-written env file`);
+                stack.config.additional_env_files = envFiles;
             }
-        }
-
-
-        const envFiles = await findFilesRecurive(envFileGlob, path);
-        if (envFiles.length > 0) {
-            stack.config.env_file_path = komodoEnvName
-            logger.info(stripIndents`Found ${envFiles.length} env files matching pattern ${envFileGlob}:
-            ${envFiles.join('\n')}`);
-            logger.info(`Using ${komodoEnvName} for Komodo-written env file`);
-            stack.config.additional_env_files = envFiles;
         }
 
         logger.info('Stack config complete');
@@ -87,9 +73,9 @@ export const buildFileStack = async (path: string, options: BuildFileStackOption
         return removeUndefinedKeys(stack);
     } catch (e) {
         logJson = true;
-        throw new Error(`Error occurred while processing Stack for folder ${pathInfo.name}`, {cause: e});
+        throw new Error(`Error occurred while processing Stack for folder ${folderName}`, { cause: e });
     } finally {
-        if(logJson) {
+        if (logJson) {
             logger.debug(`Stack Config: ${JSON.stringify(stack)}}`);
         }
     }
@@ -100,7 +86,7 @@ export const buildFileStacks = async (dirs: string[], options: FilesOnServerConf
 
     const {
         composeFileGlob = DEFAULT_COMPOSE_GLOB,
-        envFileGlob = '**/.env',
+        envFileGlob = DEFAULT_ENV_GLOB,
     } = options;
 
     logger.info(`Processing Stacks for ${dirs.length} folders:\n${dirs.join('\n')}`);
@@ -110,7 +96,7 @@ export const buildFileStacks = async (dirs: string[], options: FilesOnServerConf
     const stacks: TomlStack[] = [];
     for (const dir of dirs) {
         try {
-            stacks.push(await buildFileStack(dir, {...options, logger}));
+            stacks.push(await buildFileStack(dir, { ...options, logger }));
         } catch (e) {
             logger.error(new Error(`Unable to build Stack for folder ${dir}`, { cause: e }));
         }
