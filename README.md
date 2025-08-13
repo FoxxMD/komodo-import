@@ -16,17 +16,18 @@ Komodo Import is a small docker container that takes some user-provided configur
 
 Current functionality:
 
-* [x] Generate TOML
-   * [x] [To Docker Logs](https://foxxmd.github.io/komodo-import/docs/usage/overview#console)
-   * [x] [To File](https://foxxmd.github.io/komodo-import/docs/usage/overview#file)
-* [x] Generate Toml For...
+* Generate Resources from...
   * [x] Stack
-     * [x] ["Files On Server"](https://foxxmd.github.io/komodo-import/docs/usage/overview#files-on-server) Stack types   
-     * [ ] Git Repo
-* [x]  Import directly with Komodo API
-  * [x] [Create/modify Resource Sync](https://foxxmd.github.io/komodo-import/docs/usage/overview#api-sync)
-  * [ ] Create/modify Stacks
-  * [ ] Create/modify Deployments
+     * [x] [Files On Server](https://foxxmd.github.io/komodo-import/docs/usage/overview#files-on-server) Stacks from plain folders  
+     * [x] [Git-based](https://foxxmd.github.io/komodo-import/docs/usage/overview#git-repo) Stacks from folders containing git repository
+* Generate To...
+  * [x] TOML
+    * [x] in [Docker Logs](https://foxxmd.github.io/komodo-import/docs/usage/overview#console)
+    * [x] in [File](https://foxxmd.github.io/komodo-import/docs/usage/overview#file)
+  * [x] Import directly with Komodo API
+    * [x] [Create/modify Resource Sync](https://foxxmd.github.io/komodo-import/docs/usage/overview#api-sync)
+    * [ ] Create/modify Stacks
+    * [ ] Create/modify Deployments
 
 ## Quick Start
 
