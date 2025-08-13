@@ -1,37 +1,22 @@
 import { childLogger, Logger } from "@foxxmd/logging";
-import { KomodoClient, Types } from "komodo_client";
+import { Types } from "komodo_client";
 import { isDebugMode, isUndefinedOrEmptyString, parseBool } from "../common/utils/utils.js";
 import path from 'path';
 import { stripIndents } from "common-tags";
 import dayjs from "dayjs";
-import { normalizeWebAddress } from "../common/utils/network.js";
+import { getDefaultKomodoApi } from "../common/utils/komodo.js";
 
 export const exportToSync = async (toml: string, parentLogger: Logger): Promise<void> => {
     const logger = childLogger(parentLogger, 'Sync API');
 
     if (parseBool(process.env.OUTPUT_API_SYNC)) {
         try {
-            if (isUndefinedOrEmptyString(process.env.API_KEY)) {
-                logger.error(`Cannot export to Resource Sync because env API_KEY is missing`);
-                return;
-            }
-            if (isUndefinedOrEmptyString(process.env.API_SECRET)) {
-                logger.error(`Cannot export to Resource Sync because env API_SECRET is missing`);
-                return;
+            const komodo = getDefaultKomodoApi();
+            if(komodo === undefined) {
+                throw new Error('Komodo API is unavaiable, cannot export to Sync');
             }
             const syncName = isUndefinedOrEmptyString(process.env.SYNC_NAME) ? 'komodo-import' : process.env.SYNC_NAME;
             logger.info(`Using '${syncName}' as Sync Name`);
-
-            const urlData = normalizeWebAddress(process.env.KOMODO_URL);
-            logger.verbose(`KOMODO_URL: ${process.env.KOMODO_URL} | Normalized: ${urlData.url.toString()}`)
-
-            const komodo = KomodoClient(urlData.url.toString(), {
-                type: "api-key",
-                params: {
-                    key: process.env.API_KEY,
-                    secret: process.env.API_SECRET
-                },
-            });
 
             let syncId: string;
             let existingBehaviorVal = process.env.EXISTING_SYNC ?? 'append';
@@ -39,7 +24,7 @@ export const exportToSync = async (toml: string, parentLogger: Logger): Promise<
             let existingSync: Types.ResourceSync;
 
             try {
-                existingSync = await komodo.read('GetResourceSync', {
+                existingSync = await komodo.api.read('GetResourceSync', {
                     sync: syncName
                 });
                 syncId = existingSync._id.$oid;
@@ -61,7 +46,7 @@ export const exportToSync = async (toml: string, parentLogger: Logger): Promise<
 
 
             if (syncId === undefined) {
-                const sync = await komodo.write('CreateResourceSync', {
+                const sync = await komodo.api.write('CreateResourceSync', {
                     name: syncName,
                     config: {
                         include_resources: true,
@@ -72,7 +57,7 @@ export const exportToSync = async (toml: string, parentLogger: Logger): Promise<
                 logger.info('Resource Sync created.');
             } else {
                 if (existingBehavior === 'overwrite') {
-                    const sync = await komodo.write('UpdateResourceSync', {
+                    const sync = await komodo.api.write('UpdateResourceSync', {
                         id: syncId,
                         config: {
                             include_resources: true,
@@ -82,7 +67,7 @@ export const exportToSync = async (toml: string, parentLogger: Logger): Promise<
                      logger.info('Resource Sync overwrriten.');
                 } else {
                     const time = dayjs().format('YYYY-MM-DD--HH-mm-ss');
-                    const sync = await komodo.write('UpdateResourceSync', {
+                    const sync = await komodo.api.write('UpdateResourceSync', {
                         id: syncId,
                         config: {
                             include_resources: true,
@@ -99,7 +84,7 @@ export const exportToSync = async (toml: string, parentLogger: Logger): Promise<
                 }
             }
 
-            const syncUrl = path.join(urlData.url.toString(), 'resource-syncs', syncId);
+            const syncUrl = path.join(komodo.urlData.url.toString(), 'resource-syncs', syncId);
 
             logger.info(`Resource Sync URL: ${syncUrl}`);
         }

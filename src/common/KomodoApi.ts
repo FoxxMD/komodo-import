@@ -5,6 +5,7 @@ import { normalizeWebAddress } from "./utils/network.js";
 import { ListGitProviderAccountsResponse, ListReposResponse } from "komodo_client/dist/types.js";
 import { initLogger } from "./logging.js";
 import { SimpleError } from "./errors.js";
+import { URLData } from "./infrastructure/atomic.js";
 
 export interface KomodoApiOptions {
     url?: string
@@ -16,6 +17,7 @@ export class KomodoApi {
     options: KomodoApiOptions;
     api: ReturnType<typeof KomodoClient>
     logger: Logger;
+    urlData: URLData;
 
     cachedRepos?: ListReposResponse;
     cachedGitProviders?: ListGitProviderAccountsResponse;
@@ -23,6 +25,7 @@ export class KomodoApi {
     constructor(logger?: Logger, options?: KomodoApiOptions) {
         this.logger = childLogger(logger ?? initLogger()[0], 'Komodo API');
         this.options = options;
+        this.urlData = normalizeWebAddress(process.env.KOMODO_URL);
     }
 
     init = () => {
@@ -36,10 +39,9 @@ export class KomodoApi {
             if (isUndefinedOrEmptyString(process.env.KOMODO_URL)) {
                 throw new SimpleError(`Cannot use Komodo API because env KOMODO_URL is missing`);
             }
-            const urlData = normalizeWebAddress(process.env.KOMODO_URL);
-            this.logger.verbose(`KOMODO_URL: ${process.env.KOMODO_URL} | Normalized: ${urlData.url.toString()}`);
+            this.logger.verbose(`KOMODO_URL: ${process.env.KOMODO_URL} | Normalized: ${this.urlData.url.toString()}`);
 
-            this.api = KomodoClient(urlData.url.toString(), {
+            this.api = KomodoClient(this.urlData.url.toString(), {
                 type: "api-key",
                 params: {
                     key: process.env.API_KEY,
