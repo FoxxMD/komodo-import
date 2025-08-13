@@ -1,7 +1,7 @@
 import { AnyStackConfig, FilesOnServerConfig, GitStackConfig } from "../../common/infrastructure/config/stackConfig.js";
 import { TomlStack } from "../../common/infrastructure/tomlObjects.js";
 import { promises } from 'fs';
-import {  findFolders, pathExistsAndIsReadable } from "../../common/utils/io.js";
+import { findFolders, pathExistsAndIsReadable } from "../../common/utils/io.js";
 import { childLogger, Logger } from "@foxxmd/logging";
 import { formatIntoColumns, isUndefinedOrEmptyString, parseBool } from "../../common/utils/utils.js";
 import { detectGitRepo, GitRepoData, komodoRepoFromRemote, matchGitDataWithKomodo } from "../../common/utils/git.js";
@@ -33,8 +33,22 @@ export const buildStacksFromPath = async (path: string, options: AnyStackConfig,
         throw new Error(`Could not access ${path}.${parseBool(process.env.IS_DOCKER) ? ' This is the path *in container* that is read so make sure you have mounted it on the host!' : ''}`);
     }
 
+    let gitData: GitRepoData;
+    try {
+        gitData = await detectGitRepo(path);
+        logger.verbose(`Detected top-level dir ${topDir} is a Git repo: Branch ${gitData[0].branch} | Remote ${gitData[1].remote} | URL ${gitData[1].url}`);
+        logger.verbose('Will treat this as a monorepo -- all subfolders will be built as Git-Repo Stacks using the same repo with Run Directory relative to repo root.');
+    } catch (e) {
+        if (e instanceof SimpleError) {
+            logger.verbose(`Top-level dir is not a git repo: ${e.message}`);
+            logger.verbose('Subfolders will be individually detected as Git repo or files-on-server Stacks')
+        } else {
+            throw e;
+        }
+    }
+
     let stacksDir: string = topDir;
-    if (!isUndefinedOrEmptyString(process.env.GIT_STACKS_DIR)) {
+    if (!isUndefinedOrEmptyString(process.env.GIT_STACKS_DIR) && gitData !== undefined) {
         try {
             stacksDir = await promises.realpath(process.env.GIT_STACKS_DIR);
             logger.info(`Git Stack Dir: ${stacksDir} -> Resolved: ${stacksDir}`);
@@ -49,17 +63,6 @@ export const buildStacksFromPath = async (path: string, options: AnyStackConfig,
     const dirs = await findFolders(stacksDir, folderGlob, ignoreFolderGlob)
     const folderPaths = dirs.map(x => joinPath(stacksDir, x));
 
-    let gitData: GitRepoData;
-    try {
-        gitData = await detectGitRepo(path);
-    } catch (e) {
-        if (e instanceof SimpleError) {
-            logger.debug(e.message);
-        } else {
-            throw e;
-        }
-    }
-
     logger.info(`Folder Glob: ${folderGlob ?? DEFAULT_GLOB_FOLDER}`);
     logger.info(`Folder Ignore Glob${ignoreFolderGlob === undefined ? ' N/A ' : `: ${DEFAULT_GLOB_FOLDER}`}`);
     logger.info(`Compose File Glob: ${composeFileGlob}`);
@@ -69,9 +72,6 @@ export const buildStacksFromPath = async (path: string, options: AnyStackConfig,
     let hostParentPathVerified = false;
 
     if (gitData !== undefined) {
-
-        logger.info(`Detected top-level dir ${topDir} is a Git repo: Branch ${gitData[0].branch} | Remote ${gitData[1].remote} | URL ${gitData[1].url}`);
-        logger.info('Will treat this as a monorepo -- all subfolders will be built as Git-Repo Stacks using the same repo with Run Directory relative to repo root.');
 
         let gitStackConfig: Partial<GitStackConfig> = {
             inMonorepo: true
@@ -105,8 +105,6 @@ export const buildStacksFromPath = async (path: string, options: AnyStackConfig,
             writeEnv: parseBool(process.env.GIT_WRITE_ENV, false),
             inMonorepo: true
         }
-    } else {
-        logger.info('Top-level dir is not a git repo -- subfolders will be individually detected as Git repo or files-on-server Stacks.');
     }
 
     for (const f of folderPaths) {
@@ -128,11 +126,11 @@ export const buildStacksFromPath = async (path: string, options: AnyStackConfig,
         } else {
 
             try {
-                stacks.push(await buildGitStack(f, { 
-                    inMonorepo: false, 
+                stacks.push(await buildGitStack(f, {
+                    inMonorepo: false,
                     writeEnv: parseBool(process.env.GIT_WRITE_ENV, false),
-                    ...options, 
-                    logger 
+                    ...options,
+                    logger
                 }));
                 continue;
             } catch (e) {

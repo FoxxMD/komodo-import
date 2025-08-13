@@ -1,5 +1,6 @@
 import { Logger } from "@foxxmd/logging";
 import { KomodoApi } from "../KomodoApi.js";
+import { SimpleError } from "../errors.js";
 
 let api: KomodoApi;
 let init = false;
@@ -16,7 +17,11 @@ export const getDefaultKomodoApi = (logger?: Logger) => {
             maybeApi.init();
             api = maybeApi;
         } catch (e) {
-            maybeApi.logger.warn(new Error('Komodo Client unavailable', {cause: e}));
+            if(e instanceof SimpleError) {
+                maybeApi.logger.warn(`Komodo Client unavailable: ${e.message}`)
+            } else {
+                maybeApi.logger.warn(new Error('Komodo Client unavailable', {cause: e}));
+            }
         } finally {
             init = true;
         }

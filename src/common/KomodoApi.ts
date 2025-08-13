@@ -4,6 +4,7 @@ import { isUndefinedOrEmptyString } from "./utils/utils.js";
 import { normalizeWebAddress } from "./utils/network.js";
 import { ListGitProviderAccountsResponse, ListReposResponse } from "komodo_client/dist/types.js";
 import { initLogger } from "./logging.js";
+import { SimpleError } from "./errors.js";
 
 export interface KomodoApiOptions {
     url?: string
@@ -27,15 +28,13 @@ export class KomodoApi {
     init = () => {
         if (this.api === undefined) {
             if (isUndefinedOrEmptyString(process.env.API_KEY)) {
-                throw new Error(`Cannot use Komodo API because env API_KEY is missing`);
-                return;
+                throw new SimpleError(`Cannot use Komodo API because env API_KEY is missing`);
             }
             if (isUndefinedOrEmptyString(process.env.API_SECRET)) {
-                throw new Error(`Cannot use Komodo API because env API_SECRET is missing`);
-                return;
+                throw new SimpleError(`Cannot use Komodo API because env API_SECRET is missing`);
             }
             if (isUndefinedOrEmptyString(process.env.KOMODO_URL)) {
-                throw new Error(`Cannot use Komodo API because env KOMODO_URL is missing`);
+                throw new SimpleError(`Cannot use Komodo API because env KOMODO_URL is missing`);
             }
             const urlData = normalizeWebAddress(process.env.KOMODO_URL);
             this.logger.verbose(`KOMODO_URL: ${process.env.KOMODO_URL} | Normalized: ${urlData.url.toString()}`);
