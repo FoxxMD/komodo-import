@@ -11,28 +11,23 @@ if (typeof process.env.CONFIG_DIR === 'string') {
     logPath = path.resolve(process.env.CONFIG_DIR, './logs');
 }
 
-export const initLogger = (): [Logger, Transform] => {
+export const initLogger = (): Logger => {
     const opts = parseLogOptions({file: false, console: 'debug'})
     const stream = new PassThrough({objectMode: true});
     const logger = buildLogger('debug', [
         buildDestinationStdout(opts.console),
-        buildDestinationJsonPrettyStream(opts.console, {destination: stream, object: true, colorize: true})
     ]);
-    return [logger, stream];
+    return logger;
 }
 
-export const appLogger = async (config: LogOptions = {}): Promise<[Logger, PassThrough]> => {
-    const stream = new PassThrough({objectMode: true});
+export const appLogger = async (config: LogOptions = {}): Promise<Logger> => {
     const { file } = config;
     const opts = parseLogOptions(isDebugMode() ? {...config, file: typeof file === 'object' ? {...file, level: 'debug'} : 'debug', console: 'debug', level: 'debug'} : config);
     const logger = await loggerAppRolling(config, {
         logBaseDir: typeof process.env.CONFIG_DIR === 'string' ? process.env.CONFIG_DIR : undefined,
         logDefaultPath: './logs/app.log',
-        destinations: [
-            buildDestinationJsonPrettyStream(opts.console, {destination: stream, object: true, colorize: true})
-        ]
     });
-    return [logger, stream];
+    return logger;
 }
 
 export const componentFileLogger = async (type: string, name: string, fileConfig: true | LogLevel | FileLogOptions, config: LogOptions = {}): Promise<Logger> => {

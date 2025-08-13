@@ -21,7 +21,7 @@ import { buildStacksFromPath } from './builders/stack/stackBuilder.js';
 dayjs.extend(utc)
 dayjs.extend(timezone);
 
-const [parentInitLogger] = getInitLogger();
+const parentInitLogger = getInitLogger();
 const initLogger = childLogger(parentInitLogger, 'Init');
 
 let logger: FoxLogger;
@@ -49,7 +49,7 @@ try {
 
     await parseVersion();
 
-    const [aLogger, appLoggerStream] = await appLogger()
+    const aLogger = await appLogger()
     logger = childLogger(aLogger, 'App');
 
     logger.info(`Version: ${version}`);
