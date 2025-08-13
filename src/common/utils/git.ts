@@ -163,7 +163,12 @@ export const komodoRepoFromRemote = (remote: string): [string, string?] => {
 }
 
 export const matchGitDataWithKomodo = async (gitData: GitRepoData): Promise<[GitProviderAccount?, RepoListItem?, string?]> => {
-    const repos = await getDefaultKomodoApi().getRepos();
+    const api = getDefaultKomodoApi();
+    if(api === undefined) {
+        return [undefined, undefined, 'Komodo API unavailable'];
+    }
+
+    const repos = await api.getRepos();
 
     let provider: GitProviderAccount;
     let repo: RepoListItem;
@@ -182,7 +187,7 @@ export const matchGitDataWithKomodo = async (gitData: GitRepoData): Promise<[Git
         }
     }
 
-    const providers = await getDefaultKomodoApi().getGitProviders();
+    const providers = await api.getGitProviders();
     const validProvider = providers.find(x => gitData[1].url.includes(x.domain));
     if (validProvider !== undefined) {
         provider = validProvider;

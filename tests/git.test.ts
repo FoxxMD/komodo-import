@@ -113,7 +113,7 @@ describe('#Git', function () {
         });
     });
 
-    describe('#GitStack', function () {
+    describe('#GitRepo', function () {
 
         it(`detects as not a git repo when no .git folder is present`, async function () {
             await withLocalTmpDir(async () => {
@@ -189,7 +189,7 @@ describe('#Git', function () {
             }, { unsafeCleanup: true });
         });
 
-         it(`detects as a suitable git repo when tracked branch has a remote`, async function () {
+        it(`detects as a suitable git repo when tracked branch has a remote`, async function () {
             await withLocalTmpDir(async () => {
                 const dir = path.join(process.cwd(), 'test_1');
                 await mkdir(dir);
@@ -209,9 +209,38 @@ describe('#Git', function () {
                 });
                 // cannot yet clone local repo with isomorphic git
                 // https://github.com/isomorphic-git/isomorphic-git/issues/1263
-                await execa({cwd: dir})`git clone remote local`
+                await execa({ cwd: dir })`git clone remote local`
                 await expect(detectGitRepo(localDir)).to.eventually.be.fulfilled;
             }, { unsafeCleanup: true });
         });
     });
+
+    // describe('#GitStack', function () {
+
+    //     it(`creates a valid stack`, async function () {
+    //         await withLocalTmpDir(async () => {
+    //             const dir = path.join(process.cwd(), 'test_1');
+    //             await mkdir(dir);
+    //             const localDir = path.join(dir, 'local');
+    //             //await mkdir(localDir);
+    //             const remoteDir = path.join(dir, 'remote');
+    //             await mkdir(remoteDir);
+    //             await git.init({ fs, dir: remoteDir });
+    //             await git.commit({
+    //                 fs,
+    //                 dir: remoteDir,
+    //                 author: {
+    //                     name: 'Mr. Test',
+    //                     email: 'mrtest@example.com',
+    //                 },
+    //                 message: 'Added the a.txt file'
+    //             });
+    //             // cannot yet clone local repo with isomorphic git
+    //             // https://github.com/isomorphic-git/isomorphic-git/issues/1263
+    //             await execa({ cwd: dir })`git clone remote local`
+    //             await expect(buildGitStack(localDir, defaultGitStandaloneConfig)).to.eventually.be.fulfilled;
+    //         }, { unsafeCleanup: true });
+    //     });
+
+    // });
 });
