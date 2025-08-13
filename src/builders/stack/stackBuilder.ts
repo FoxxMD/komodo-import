@@ -1,21 +1,24 @@
 import { AnyStackConfig, FilesOnServerConfig, GitStackConfig } from "../../common/infrastructure/config/stackConfig.js";
 import { TomlStack } from "../../common/infrastructure/tomlObjects.js";
 import { promises } from 'fs';
-import {  pathExistsAndIsReadable, readDirectories } from "../../common/utils/io.js";
+import {  findFolders, pathExistsAndIsReadable } from "../../common/utils/io.js";
 import { childLogger, Logger } from "@foxxmd/logging";
-import { isUndefinedOrEmptyString, parseBool } from "../../common/utils/utils.js";
+import { formatIntoColumns, isUndefinedOrEmptyString, parseBool } from "../../common/utils/utils.js";
 import { detectGitRepo, GitRepoData, komodoRepoFromRemote, matchGitDataWithKomodo } from "../../common/utils/git.js";
 import { buildGitStack } from "./gitStack.js";
 import { join as joinPath, parse, ParsedPath } from 'path';
 import { DEFAULT_COMPOSE_GLOB, DEFAULT_ENV_GLOB } from "./stackUtils.js";
 import { buildFileStack } from "./filesOnServer.js";
 import { SimpleError } from "../../common/errors.js";
+import { DEFAULT_GLOB_FOLDER } from "../../common/infrastructure/atomic.js";
 
 export const buildStacksFromPath = async (path: string, options: AnyStackConfig, parentLogger: Logger): Promise<TomlStack[]> => {
 
     const {
         composeFileGlob = DEFAULT_COMPOSE_GLOB,
         envFileGlob = DEFAULT_ENV_GLOB,
+        folderGlob,
+        ignoreFolderGlob
     } = options;
 
     let stackOptions = options;
@@ -43,7 +46,7 @@ export const buildStacksFromPath = async (path: string, options: AnyStackConfig,
 
     let stacks: TomlStack[] = [];
 
-    const dirs = await readDirectories(stacksDir);
+    const dirs = await findFolders(stacksDir, folderGlob, ignoreFolderGlob)
     const folderPaths = dirs.map(x => joinPath(stacksDir, x));
 
     let gitData: GitRepoData;
@@ -57,9 +60,11 @@ export const buildStacksFromPath = async (path: string, options: AnyStackConfig,
         }
     }
 
-    logger.info(`Processing Stacks for ${dirs.length} folders in ${stacksDir}:\n${dirs.join('\n')}`);
+    logger.info(`Folder Glob: ${folderGlob ?? DEFAULT_GLOB_FOLDER}`);
+    logger.info(`Folder Ignore Glob${ignoreFolderGlob === undefined ? ' N/A ' : `: ${DEFAULT_GLOB_FOLDER}`}`);
     logger.info(`Compose File Glob: ${composeFileGlob}`);
     logger.info(`Env Glob: ${envFileGlob}`);
+    logger.info(`Processing Stacks for ${dirs.length} folders in ${stacksDir}:\n${formatIntoColumns(dirs, 3)}`);
 
     let hostParentPathVerified = false;
 

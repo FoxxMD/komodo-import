@@ -7,4 +7,6 @@ export interface CommonImportOptions {
     komodoEnvName?: string
     composeFileGlob?: string
     envFileGlob?: string
+    folderGlob?: string
+    ignoreFolderGlob?: string
 }

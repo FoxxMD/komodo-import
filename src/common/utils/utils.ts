@@ -49,3 +49,30 @@ export const isUndefinedOrEmptyString = (val: undefined | string): boolean => {
     }
     return false;
 }
+
+export const formatIntoColumns = (strings: string[], numColumns: number) => {
+    if (numColumns <= 0) {
+        throw new Error('Number of columns must be more than 0')
+    }
+
+    const maxLength = strings.reduce((max, str) => Math.max(max, str.length), 0);
+    const columnWidth = maxLength + 2; // Add some padding for readability
+
+    let result = '';
+    let row = '';
+
+    for (let i = 0; i < strings.length; i++) {
+        if ((i % numColumns) === 0 && row !== '') {
+            result += row.trimEnd() + '\n';
+            row = '';
+        }
+        row += strings[i].padEnd(columnWidth, ' ');
+    }
+
+    // Add the last row if it's not empty
+    if (row !== '') {
+        result += row.trimEnd();
+    }
+
+    return result;
+}

@@ -6,7 +6,7 @@ import path from 'path';
 import dayjs from 'dayjs';
 import timezone from 'dayjs/plugin/timezone.js';
 import utc from 'dayjs/plugin/utc.js';
-import { isDebugMode, parseBool } from './common/utils/utils.js';
+import { isDebugMode, isUndefinedOrEmptyString, parseBool } from './common/utils/utils.js';
 import { parse, stringify } from 'smol-toml';
 import { _PartialStackConfig } from 'komodo_client/dist/types.js';
 import { TomlStack } from './common/infrastructure/tomlObjects.js';
@@ -64,7 +64,9 @@ try {
         pollForUpdate: parseBool(process.env.POLL_FOR_UPDATE),
         komodoEnvName: process.env.KOMODO_ENV_NAME,
         composeFileGlob: process.env.COMPOSE_FILE_GLOB,
-        envFileGlob: process.env.ENV_FILE_GLOB
+        envFileGlob: process.env.ENV_FILE_GLOB,
+        folderGlob: isUndefinedOrEmptyString(process.env.FOLDER_GLOB) ? undefined : process.env.FOLDER_GLOB.trim(),
+        ignoreFolderGlob: isUndefinedOrEmptyString(process.env.FOLDER_IGNORE_GLOB) ? undefined : process.env.FOLDER_IGNORE_GLOB.trim(),
     };
 
     if (importOptions.server === undefined || importOptions.server.trim() === '') {

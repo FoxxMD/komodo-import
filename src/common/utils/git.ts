@@ -1,11 +1,9 @@
 import { parseRegexSingle } from '@foxxmd/regex-buddy-core';
 import { execa, Options } from 'execa';
 import { dirHasGitConfig, readDirectories } from './io.js';
-import { Logger } from '@foxxmd/logging';
 import { GitProviderAccount, RepoListItem } from 'komodo_client/dist/types.js';
 import { getDefaultKomodoApi } from './komodo.js';
 import { GitBranchStatus } from '../infrastructure/atomic.js';
-import { isDebugMode } from './utils.js';
 import { SimpleError } from '../errors.js';
 import { projectDir } from '../index.js';
 

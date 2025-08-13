@@ -3,8 +3,7 @@ import { FilesOnServerConfig } from "../../common/infrastructure/config/stackCon
 import { _PartialStackConfig } from 'komodo_client/dist/types.js';
 import { parse, ParsedPath, sep, join } from 'path';
 import { TomlStack } from "../../common/infrastructure/tomlObjects.js";
-import { findFilesRecurive, readText, sortComposePaths } from "../../common/utils/io.js";
-import { stripIndents } from "common-tags";
+import { readText } from "../../common/utils/io.js";
 import { isDebugMode, removeUndefinedKeys } from "../../common/utils/utils.js";
 import { DEFAULT_COMPOSE_GLOB, DEFAULT_ENV_GLOB, selectComposeFiles, selectEnvFiles } from "./stackUtils.js";
 
@@ -79,29 +78,4 @@ export const buildFileStack = async (path: string, options: BuildFileStackOption
             logger.debug(`Stack Config: ${JSON.stringify(stack)}}`);
         }
     }
-}
-
-export const buildFileStacks = async (dirs: string[], options: FilesOnServerConfig & { logger: Logger }): Promise<TomlStack[]> => {
-    const logger = childLogger(options.logger, 'Files On Server');
-
-    const {
-        composeFileGlob = DEFAULT_COMPOSE_GLOB,
-        envFileGlob = DEFAULT_ENV_GLOB,
-    } = options;
-
-    logger.info(`Processing Stacks for ${dirs.length} folders:\n${dirs.join('\n')}`);
-    logger.info(`Compose File Glob: ${composeFileGlob}`);
-    logger.info(`Env Glob: ${envFileGlob}`);
-
-    const stacks: TomlStack[] = [];
-    for (const dir of dirs) {
-        try {
-            stacks.push(await buildFileStack(dir, { ...options, logger }));
-        } catch (e) {
-            logger.error(new Error(`Unable to build Stack for folder ${dir}`, { cause: e }));
-        }
-    }
-
-    logger.info(`Built Stack configs for ${stacks.length} folders`);
-    return stacks;
 }

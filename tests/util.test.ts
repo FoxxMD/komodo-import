@@ -1,7 +1,10 @@
 import { describe, it } from 'mocha';
 import chai, { expect } from 'chai';
-import { sortComposePaths } from '../src/common/utils/io.js';
+import { findFolders, sortComposePaths } from '../src/common/utils/io.js';
 import { normalizeWebAddress } from '../src/common/utils/network.js';
+import withLocalTmpDir from 'with-local-tmp-dir';
+import { mkdir, writeFile, chmod, constants } from 'node:fs/promises';
+import path from 'path';
 
 describe('#Utils', function () {
 
@@ -48,6 +51,56 @@ describe('#Utils', function () {
             }
         });
 
+    });
+
+    describe("#GlobFolder", function() {
+        it(`ignores folders that start with period`, async function () {
+            await withLocalTmpDir(async () => {
+                await mkdir(path.join(process.cwd(), 'test_1'));
+                await mkdir(path.join(process.cwd(), '.git'));
+                const folders = await findFolders(process.cwd());
+                expect(folders).to.eql(['test_1']);
+            }, { unsafeCleanup: true });
+        });
+
+        it(`ignores files`, async function () {
+            await withLocalTmpDir(async () => {
+                await mkdir(path.join(process.cwd(), 'test_1'));
+                await writeFile(path.join(process.cwd(), 'test.txt'), '');
+                const folders = await findFolders(process.cwd());
+                expect(folders).to.eql(['test_1']);
+            }, { unsafeCleanup: true });
+        });
+
+        it(`default ignores subfolders`, async function () {
+            await withLocalTmpDir(async () => {
+                await mkdir(path.join(process.cwd(), 'test_1'));
+                await mkdir(path.join(process.cwd(), 'test_2', 'subfolder'), {recursive: true});
+                await writeFile(path.join(process.cwd(), 'test_2', 'subfolder', 'test.txt'), '');
+                const folders = await findFolders(process.cwd());
+                expect(folders).to.deep.eq(['test_2', 'test_1']);
+            }, { unsafeCleanup: true });
+        });
+
+        it(`works with other globs`, async function () {
+            await withLocalTmpDir(async () => {
+                await mkdir(path.join(process.cwd(), 'test_1'));
+                await mkdir(path.join(process.cwd(), 'ignoreme', 'subfolder'), {recursive: true});
+                await writeFile(path.join(process.cwd(), 'ignoreme', 'subfolder', 'test.txt'), '');
+                const folders = await findFolders(process.cwd(), 'test*');
+                expect(folders).to.deep.eq(['test_1']);
+            }, { unsafeCleanup: true });
+        });
+
+        it(`works with ignore globs`, async function () {
+            await withLocalTmpDir(async () => {
+                await mkdir(path.join(process.cwd(), 'test_1'));
+                await mkdir(path.join(process.cwd(), 'ignoreme', 'subfolder'), {recursive: true});
+                await writeFile(path.join(process.cwd(), 'ignoreme', 'subfolder', 'test.txt'), '');
+                const folders = await findFolders(process.cwd(), undefined, 'ignore*');
+                expect(folders).to.deep.eq(['test_1']);
+            }, { unsafeCleanup: true });
+        });
     });
 
     describe('Normalizing URL', function () {

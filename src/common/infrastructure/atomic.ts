@@ -9,4 +9,6 @@ export interface GitBranchStatus {
      remote?: string,
      remoteBranch?: string
      raw: string 
-    }
+}
+
+export const DEFAULT_GLOB_FOLDER = '*';

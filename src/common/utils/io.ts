@@ -2,6 +2,7 @@ import { accessSync, constants, promises } from "fs";
 import pathUtil from "path";
 import { glob } from 'glob';
 import clone from 'clone';
+import { DEFAULT_GLOB_FOLDER } from "../infrastructure/atomic.js";
 
 export async function writeFile(path: any, text: any) {
     try {
@@ -123,6 +124,20 @@ export const readDirectories = async (path: string, options: ReadDirectoryOption
         return directories;
     } catch (e) {
         throw new Error(`Could not read folders at dir ${path}`);
+    }
+}
+
+export const findFolders = async (fromDir: string, filePattern: string = DEFAULT_GLOB_FOLDER, ignore?: string): Promise<string[]> => {
+    try {
+        const res = await glob(filePattern, {
+            cwd: fromDir,
+            nodir: false,
+            withFileTypes: true,
+            ignore
+        });
+        return res.filter(x => x.isDirectory()).map(x => x.name);
+    } catch (e) {
+        throw new Error(`Error occurred while trying to find files for pattern ${filePattern}`, { cause: e });
     }
 }
 
