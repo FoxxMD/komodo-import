@@ -21,7 +21,10 @@ export const buildStacksFromPath = async (path: string, options: AnyStackConfig,
         ignoreFolderGlob
     } = options;
 
-    let stackOptions = options;
+    let stackOptions = {
+        ...options,
+        writeEnv: parseBool(process.env.WRITE_ENV, false)
+    };
 
     const logger = childLogger(parentLogger, 'Stacks');
     let topDir: string;
@@ -102,7 +105,6 @@ export const buildStacksFromPath = async (path: string, options: AnyStackConfig,
         stackOptions = {
             ...stackOptions,
             ...gitStackConfig,
-            writeEnv: parseBool(process.env.WRITE_ENV, false),
             inMonorepo: true
         }
     }
@@ -128,8 +130,7 @@ export const buildStacksFromPath = async (path: string, options: AnyStackConfig,
             try {
                 stacks.push(await buildGitStack(f, {
                     inMonorepo: false,
-                    writeEnv: parseBool(process.env.WRITE_ENV, false),
-                    ...options,
+                    ...stackOptions,
                     logger
                 }));
                 continue;
@@ -146,15 +147,14 @@ export const buildStacksFromPath = async (path: string, options: AnyStackConfig,
                 }
             }
 
-            const opts = options as FilesOnServerConfig;
             if (!hostParentPathVerified) {
-                if (isUndefinedOrEmptyString(opts.hostParentPath)) {
+                if (isUndefinedOrEmptyString(stackOptions.hostParentPath)) {
                     throw new Error('env HOST_PARENT_PATH is not set');
                 }
                 hostParentPathVerified = true;
             }
             try {
-                stacks.push(await buildFileStack(f, { ...opts, logger }));
+                stacks.push(await buildFileStack(f, { ...stackOptions, logger }));
             } catch (e) {
                 folderLogger.error(new Error(`Unable to build Files-On-Server Stack for folder ${f}`, { cause: e }));
             }
