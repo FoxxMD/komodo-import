@@ -5,6 +5,7 @@ import { _PartialStackConfig } from "komodo_client/dist/types.js";
 import { CommonImportOptions } from "../../common/infrastructure/config/common.js";
 import { CommonStackConfig } from "../../common/infrastructure/config/stackConfig.js";
 import { join } from 'path';
+import createStatsCollector from "mocha/lib/stats-collector";
 
 export const DEFAULT_COMPOSE_GLOB = '**/{compose,docker-compose}*.y?(a)ml';
 
@@ -77,7 +78,8 @@ export const parseEnvConfig = async (path: string, options: ParseEnvOptions = {}
             for (const f of envFiles) {
                 envContents.push(await readText(join(path, f)))
             }
-            config.environment = envContents.join('\n');
+            const nonEmptyContents = envContents.filter(x => x.trim() !== '');
+            config.environment = nonEmptyContents.length > 0 ? nonEmptyContents.join('\n') : undefined;
         }
         else {
             config.env_file_path = komodoEnvName
