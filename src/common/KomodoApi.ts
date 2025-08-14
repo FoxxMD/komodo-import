@@ -25,11 +25,16 @@ export class KomodoApi {
     constructor(logger?: Logger, options?: KomodoApiOptions) {
         this.logger = childLogger(logger ?? initLogger()[0], 'Komodo API');
         this.options = options;
-        this.urlData = normalizeWebAddress(process.env.KOMODO_URL);
+        if(process.env.KOMODO_URL !== undefined) {
+            this.urlData = normalizeWebAddress(process.env.KOMODO_URL);
+        }
     }
 
     init = () => {
         if (this.api === undefined) {
+            if (isUndefinedOrEmptyString(process.env.KOMODO_URL)) {
+                throw new SimpleError(`Cannot use Komodo API because env KOMODO_URL is missing`);
+            }
             if (isUndefinedOrEmptyString(process.env.API_KEY)) {
                 throw new SimpleError(`Cannot use Komodo API because env API_KEY is missing`);
             }
