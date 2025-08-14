@@ -6,7 +6,7 @@ import { TomlStack } from "../../common/infrastructure/tomlObjects.js";
 import { dirHasGitConfig, findFilesRecurive, readDirectories, readText, sortComposePaths } from "../../common/utils/io.js";
 import { stripIndents } from "common-tags";
 import { isDebugMode, removeUndefinedKeys } from "../../common/utils/utils.js";
-import { DEFAULT_COMPOSE_GLOB, DEFAULT_ENV_GLOB, selectComposeFiles, selectEnvFiles } from "./stackUtils.js";
+import { DEFAULT_COMPOSE_GLOB, DEFAULT_ENV_GLOB, parseEnvConfig, selectComposeFiles, selectEnvFiles } from "./stackUtils.js";
 import { detectGitRepo, GitRepoData, komodoRepoFromRemote, matchGitDataWithKomodo, matchRemote, RemoteInfo } from "../../common/utils/git.js";
 import { SimpleError } from "../../common/errors.js";
 import { readFile } from "fs/promises";
@@ -108,20 +108,15 @@ export const buildGitStack = async (path: string, options: BuildGitStackOptions)
             stack.config.file_paths = composePaths.map(x => inMonorepo ? join(monoRepoPath, x) : x);
         }
 
-        const envFiles = await selectEnvFiles(envFileGlob, path, logger);
-        if (envFiles !== undefined) {
-            if (writeEnv) {
-                logger.verbose('Writing env file(s) contents to Komodo Environmnent');
-                const envContents: string[] = [];
-                for (const f of envFiles) {
-                    envContents.push(await readText(envFiles))
-                }
-                stack.config.environment = envContents.join('\n');
-            } else {
-                stack.config.env_file_path = komodoEnvName
-                logger.info(`Using ${komodoEnvName} for Komodo-written env file`);
-                stack.config.additional_env_files = envFiles.map(x => inMonorepo ? join(monoRepoPath, x) : x);
-            }
+        stack.config = {
+            ...stack.config,
+            ...await(parseEnvConfig(path, {
+                envFileGlob, 
+                writeEnv,
+                pathPrefix: monoRepoPath,
+                komodoEnvName,
+                logger
+            }))
         }
 
         logger.info('Git Stack config complete');

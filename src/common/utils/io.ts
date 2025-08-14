@@ -1,6 +1,6 @@
 import { accessSync, constants, promises } from "fs";
 import pathUtil from "path";
-import { glob } from 'glob';
+import { glob, GlobOptionsWithFileTypesUnset } from 'glob';
 import clone from 'clone';
 import { DEFAULT_GLOB_FOLDER } from "../infrastructure/atomic.js";
 
@@ -67,11 +67,12 @@ export async function readText(path: any) {
     return data.toString();
 }
 
-export const findFilesRecurive = async (filePattern: string, fromDir: string): Promise<string[]> => {
+export const findFilesRecurive = async (filePattern: string, fromDir: string, options: GlobOptionsWithFileTypesUnset = {}): Promise<string[]> => {
     try {
         return await glob(filePattern, {
             cwd: fromDir,
-            //nodir: true
+            nodir: true,
+            ...options
         });
     } catch (e) {
         throw new Error(`Error occurred while trying to find files for pattern ${filePattern}`, { cause: e });

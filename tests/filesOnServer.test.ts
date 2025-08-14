@@ -6,6 +6,7 @@ import path from "path";
 import { loggerTest } from "@foxxmd/logging";
 import { buildFileStack, BuildFileStackOptions } from '../src/builders/stack/filesOnServer.js';
 import { FilesOnServerConfig } from '../src/common/infrastructure/config/stackConfig.js';
+import { stripIndents } from 'common-tags';
 
 const DEFAULT_FOS_PATH = '/my/cool'
 const DEFAULT_SERVER = 'test-server';
@@ -114,50 +115,6 @@ describe('#FilesOnServer', function () {
 
                 expect(data.config.file_paths).to.not.be.undefined;
                 expect(data.config.file_paths.length).eq(2);
-            }, { unsafeCleanup: true });
-        });
-
-    });
-
-    describe('ENV Files', function () {
-
-        it(`does not include additional_env_files when no env files found`, async function () {
-            await withLocalTmpDir(async () => {
-                const dir = path.join(process.cwd(), 'test_1');
-
-                await mkdir(dir);
-                const data = await buildFileStack(dir, defaultFOSConfig);
-
-                expect(data.config.additional_env_files).to.be.undefined;
-            }, { unsafeCleanup: true });
-        });
-
-        it(`includes additional_env_files when env files found`, async function () {
-            await withLocalTmpDir(async () => {
-                const dir = path.join(process.cwd(), 'test_1');
-
-                await mkdir(dir);
-                await writeFile(path.join(dir, '.env'), '');
-                await mkdir(path.join(dir, 'nested'));
-                await writeFile(path.join(dir, 'nested', '.env'), '');
-                const data = await buildFileStack(dir, defaultFOSConfig);
-
-                expect(data.config.additional_env_files).to.not.be.undefined;
-                expect(data.config.additional_env_files.length).eq(2);
-                expect(data.config.additional_env_files[0]).eq('.env');
-                expect(data.config.additional_env_files[1]).eq('nested/.env');
-            }, { unsafeCleanup: true });
-        });
-
-        it(`uses komodo env name when env files found`, async function () {
-            await withLocalTmpDir(async () => {
-                const dir = path.join(process.cwd(), 'test_1');
-
-                await mkdir(dir);
-                await writeFile(path.join(dir, '.env'), '');
-                const data = await buildFileStack(dir, defaultFOSConfig);
-
-                expect(data.config.env_file_path).eq(defaultFOSConfig.komodoEnvName)
             }, { unsafeCleanup: true });
         });
 

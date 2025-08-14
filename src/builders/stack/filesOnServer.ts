@@ -5,7 +5,7 @@ import { parse, ParsedPath, sep, join } from 'path';
 import { TomlStack } from "../../common/infrastructure/tomlObjects.js";
 import { readText } from "../../common/utils/io.js";
 import { isDebugMode, removeUndefinedKeys } from "../../common/utils/utils.js";
-import { DEFAULT_COMPOSE_GLOB, DEFAULT_ENV_GLOB, selectComposeFiles, selectEnvFiles } from "./stackUtils.js";
+import { DEFAULT_COMPOSE_GLOB, DEFAULT_ENV_GLOB, parseEnvConfig, selectComposeFiles, selectEnvFiles } from "./stackUtils.js";
 
 export type BuildFileStackOptions = FilesOnServerConfig & { logger: Logger };
 
@@ -50,21 +50,14 @@ export const buildFileStack = async (path: string, options: BuildFileStackOption
 
         stack.config.file_paths = await selectComposeFiles(composeFileGlob, path, logger);
 
-        const envFiles = await selectEnvFiles(envFileGlob, path, logger);
-        if (envFiles !== undefined) {
-            if (writeEnv) {
-                logger.verbose('Writing env file(s) contents to Komodo Environmnent');
-                const envContents: string[] = [];
-                for (const f of envFiles) {
-                    envContents.push(await readText(envFiles))
-                }
-                stack.config.environment = envContents.join('\n');
-            }
-            else {
-                stack.config.env_file_path = komodoEnvName
-                logger.info(`Using ${komodoEnvName} for Komodo-written env file`);
-                stack.config.additional_env_files = envFiles;
-            }
+        stack.config = {
+            ...stack.config,
+            ...await(parseEnvConfig(path, {
+                envFileGlob, 
+                writeEnv,
+                komodoEnvName,
+                logger
+            }))
         }
 
         logger.info('Stack config complete');

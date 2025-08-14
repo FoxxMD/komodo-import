@@ -1,10 +1,16 @@
-import { Logger } from "@foxxmd/logging";
-import { findFilesRecurive, sortComposePaths } from "../../common/utils/io.js";
+import { Logger, loggerTest } from "@foxxmd/logging";
+import { findFilesRecurive, readText, sortComposePaths } from "../../common/utils/io.js";
 import { stripIndents } from "common-tags";
+import { _PartialStackConfig } from "komodo_client/dist/types.js";
+import { CommonImportOptions } from "../../common/infrastructure/config/common.js";
+import { CommonStackConfig } from "../../common/infrastructure/config/stackConfig.js";
+import { join } from 'path';
 
 export const DEFAULT_COMPOSE_GLOB = '**/{compose,docker-compose}*.y?(a)ml';
 
-export const DEFAULT_ENV_GLOB = '**/.env';
+export const DEFAULT_ENV_GLOB = '**/*.env';
+
+export const DEFAULT_KOMODO_ENV_NAME = '.komodoEnv';
 
 export const selectComposeFiles = async (glob: string, path: string, logger: Logger): Promise<string[] | undefined> => {
 
@@ -39,11 +45,47 @@ export const selectComposeFiles = async (glob: string, path: string, logger: Log
 
 export const selectEnvFiles = async (glob: string, path: string, logger: Logger): Promise<string[] | undefined> => {
 
-    const envFiles = await findFilesRecurive(glob, path);
+    const envFiles = await findFilesRecurive(glob, path, { dot: true });
     if (envFiles.length > 0) {
         logger.info(stripIndents`Found ${envFiles.length} matching env files:
             ${envFiles.join('\n')}`);
         return envFiles;
     }
     return undefined;
+}
+
+export type StackEnvConfig = Pick<_PartialStackConfig, 'additional_env_files' | 'env_file_path' | 'environment'>;
+export type ParseEnvOptions = Pick<CommonStackConfig, 'komodoEnvName' | 'writeEnv' | 'envFileGlob'> & { logger?: Logger, pathPrefix?: string };
+
+export const parseEnvConfig = async (path: string, options: ParseEnvOptions = {}): Promise<StackEnvConfig> => {
+
+    const {
+        logger = loggerTest,
+        komodoEnvName = DEFAULT_KOMODO_ENV_NAME,
+        writeEnv = false,
+        envFileGlob = DEFAULT_ENV_GLOB,
+        pathPrefix: pathPrefix
+    } = options;
+
+    const config: StackEnvConfig = {};
+
+    const envFiles = await selectEnvFiles(envFileGlob, path, logger);
+    if (envFiles !== undefined) {
+        if (writeEnv) {
+            logger.verbose('Writing env file(s) contents to Komodo Environmnent');
+            const envContents: string[] = [];
+            for (const f of envFiles) {
+                envContents.push(await readText(join(path, f)))
+            }
+            config.environment = envContents.join('\n');
+        }
+        else {
+            config.env_file_path = komodoEnvName
+            logger.info(`Using ${komodoEnvName} for Komodo-written env file`);
+            config.additional_env_files = pathPrefix === undefined ? envFiles : envFiles.map(x => join(pathPrefix, x));
+        }
+    }
+
+    return config;
+
 }
