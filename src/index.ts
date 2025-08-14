@@ -6,7 +6,7 @@ import path from 'path';
 import dayjs from 'dayjs';
 import timezone from 'dayjs/plugin/timezone.js';
 import utc from 'dayjs/plugin/utc.js';
-import { isDebugMode, isUndefinedOrEmptyString, parseBool } from './common/utils/utils.js';
+import { isDebugMode, isUndefinedOrEmptyString, parseBool, transformMultiline } from './common/utils/utils.js';
 import { parse, stringify } from 'smol-toml';
 import { _PartialStackConfig } from 'komodo_client/dist/types.js';
 import { TomlStack } from './common/infrastructure/tomlObjects.js';
@@ -94,7 +94,7 @@ try {
     let toml: string;
     let logTomlData = isDebugMode();
     try {
-        toml = stringify(data);
+        toml = transformMultiline(stringify(data));
     } catch (e) {
         logger.error(new Error('Could not produce TOML', {cause: e}));
         logTomlData = true;

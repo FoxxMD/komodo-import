@@ -5,6 +5,8 @@ import { normalizeWebAddress } from '../src/common/utils/network.js';
 import withLocalTmpDir from 'with-local-tmp-dir';
 import { mkdir, writeFile, chmod, constants } from 'node:fs/promises';
 import path from 'path';
+import { transformMultiline } from '../src/common/utils/utils.js';
+import { stripIndent, stripIndents } from 'common-tags';
 
 describe('#Utils', function () {
 
@@ -147,6 +149,58 @@ describe('#Utils', function () {
         it('Should remove trailing slash', function () {
             expect(normalizeWebAddress(`${anIP}:5000/`).normal).to.eq(`http://${anIP}:5000`);
         });
+    });
+
+});
+
+const environmentSample = `
+[[stack]]
+name = "newtest"
+
+[stack.config]
+server = "test"
+run_directory = "/test"
+files_on_host = true
+environment = "A_TEST=foowarn\nB_VAR=bar\n"
+
+[[stack]]
+name = "test"
+
+[stack.config]
+server = "test"
+run_directory = "/test"
+files_on_host = true
+environment = "ANOTHER_TEST=foowarn\nBAAAR_VAR=bar\n"
+
+[[stack]]
+name = "testbar"
+
+[stack.config]
+server = "test"
+run_directory = "/test"
+files_on_host = true`;
+
+const expectedEnvironments = [
+    stripIndents`environment = """
+    A_TEST=foowarn
+    B_VAR=bar
+    """`,
+    stripIndents`environment = """
+    ANOTHER_TEST=foowarn
+    BAAAR_VAR=bar
+    """`
+]
+
+describe('#TOML', function() {
+
+    it('replaces single line environment with multiline', function() {
+
+        const s = transformMultiline(environmentSample);
+
+        for(const e of expectedEnvironments) {
+            expect(s).includes(e);
+        }
+
     });
 
 });

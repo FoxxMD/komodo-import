@@ -1,3 +1,6 @@
+import { searchAndReplace } from "@foxxmd/regex-buddy-core";
+import { stripIndents } from "common-tags";
+
 export const isDebugMode = (): boolean => process.env.DEBUG_MODE === 'true';
 
 export function parseBool(value: any, prev: any = false): boolean {
@@ -75,4 +78,17 @@ export const formatIntoColumns = (strings: string[], numColumns: number) => {
     }
 
     return result;
+}
+
+const SINGLE_LINE_ENV_REGEX = new RegExp(/environment = "{1}(.+?)"{1}(?:\n|$)/gms); //new RegExp(/environment = (".+")(?:\\n|$)/g);
+export const transformMultiline = (toml: string): string => {
+
+    const transformed = toml.replaceAll(SINGLE_LINE_ENV_REGEX, (match, p1) => {
+        return stripIndents`environment = """
+        ${p1.replaceAll('\\n', '\n').replace(/\n$/, '')}
+        """
+        `.concat('\n');
+    });
+
+    return transformed;
 }
