@@ -5,7 +5,6 @@ import { _PartialStackConfig } from "komodo_client/dist/types.js";
 import { CommonImportOptions } from "../../common/infrastructure/config/common.js";
 import { CommonStackConfig } from "../../common/infrastructure/config/stackConfig.js";
 import { join } from 'path';
-import createStatsCollector from "mocha/lib/stats-collector";
 
 export const DEFAULT_COMPOSE_GLOB = '**/{compose,docker-compose}*.y?(a)ml';
 
