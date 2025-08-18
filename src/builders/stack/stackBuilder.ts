@@ -11,6 +11,7 @@ import { DEFAULT_COMPOSE_GLOB, DEFAULT_ENV_GLOB } from "./stackUtils.js";
 import { buildFileStack } from "./filesOnServer.js";
 import { SimpleError } from "../../common/errors.js";
 import { DEFAULT_GLOB_FOLDER } from "../../common/infrastructure/atomic.js";
+import { DockerApi } from "../../common/dockerApi.js";
 
 export const buildStacksFromPath = async (path: string, options: AnyStackConfig, parentLogger: Logger): Promise<TomlStack[]> => {
 
@@ -27,6 +28,10 @@ export const buildStacksFromPath = async (path: string, options: AnyStackConfig,
     };
 
     const logger = childLogger(parentLogger, 'Stacks');
+
+    const docker = new DockerApi();
+    const containers = await docker.getContainers({label: 'com.docker.compose.project'})
+
     let topDir: string;
     try {
         topDir = await promises.realpath(path);
