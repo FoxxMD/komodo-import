@@ -12,3 +12,18 @@ export interface GitBranchStatus {
 }
 
 export const DEFAULT_GLOB_FOLDER = '*';
+
+export type StackDiscoveryMethod = 'compose' | 'monorepo' | 'folder';
+
+export interface StackCandidate {
+    path: string
+    discovered: StackDiscoveryMethod
+    projectName: string
+}
+
+export interface StackCandidateCompose extends StackCandidate {
+    discovered: 'compose'
+    workingDir: string
+    composeFilePaths: string[]
+    state: 'running' | string
+}

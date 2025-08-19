@@ -16,9 +16,19 @@ import { initLogger } from './logging.js';
 export interface Container {
         Id: string
         Image: string
-        Labels: Record<string, string>
-        State: string
+        Labels: Record<ContainerLabels, string>
+        State: 'running' | string
 }
+
+export type ContainerLabels = 
+'com.docker.compose.project' |
+'com.docker.compose.project.config_files' |
+'com.docker.compose.project.working_dir' |
+'com.docker.compose.service' |
+'com.docker.compose.depends_on' | 
+'com.docker.compose.config-hash' |
+string
+;
 
 export class DockerApi {
         logger: Logger;
