@@ -8,7 +8,7 @@ ENV TZ=Etc/GMT \
     NODE_ENV="production" \
     IS_DOCKER=true \
     COLORED_STD=true \
-    FILES_ON_SERVER_DIR=/filesOnServer
+    MOUNT_DIR=/filesOnServer
 
 FROM base as builder
 
