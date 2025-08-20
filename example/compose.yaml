@@ -1,16 +1,16 @@
 services:
   komodo-import:
-    image: foxxmd/komodo-import:edge
+    image: foxxmd/komodo-import:latest
     volumes:
-      ## ParentDirectory:FILES_ON_SERVER_DIR
+      ## The top-level folder compose projects on the host live in
       - .:/filesOnServer
       
-      ## optional, TOML is saved to file here
-      #- ./config:/config
     environment:
-      - TZ=America/New_York
+      ## Same path as the host folder mounted above
+      - HOST_DIR=/my/cool/path
       ## Komodo Server name to use for generated Stacks
       - SERVER_NAME=my-cool-server
-      ## ParentDirectory on the host use as Stack Run Directory prefix
-      - HOST_PARENT_PATH=/my/cool/path
+
+      - TZ=America/New_York
+
     restart: no
