@@ -134,6 +134,7 @@ export class StackBuilder {
             try {
                 stacks.push(await buildGitStack(f, {
                     ...folderStackOptions,
+                    writeEnv: writeEnvGit,
                     logger: this.logger,
                 }));
                 continue;
@@ -147,7 +148,11 @@ export class StackBuilder {
             }
 
             try {
-                stacks.push(await buildFileStack(f, { ...folderStackOptions, hostParentPath: this.dirData.host, logger: this.logger }));
+                stacks.push(await buildFileStack(f, {
+                    ...folderStackOptions,
+                    writeEnv: writeEnvFolder,
+                    hostParentPath: this.dirData.host, 
+                    logger: this.logger }));
             } catch (e) {
                 folderLogger.error(new Error(`Unable to build Files-On-Server Stack for folder ${f}`, { cause: e }));
             }
