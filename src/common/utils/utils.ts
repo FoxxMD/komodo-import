@@ -1,5 +1,6 @@
 import { searchAndReplace } from "@foxxmd/regex-buddy-core";
 import { stripIndents } from "common-tags";
+import path, {sep} from 'path';
 
 export const isDebugMode = (): boolean => process.env.DEBUG_MODE === 'true';
 
@@ -26,7 +27,7 @@ export const removeUndefinedKeys = <T extends Record<string, any>>(obj: T): T | 
         if(Array.isArray(obj[key])) {
             newObj[key] = obj[key];
         } else if (obj[key] === Object(obj[key])) {
-            newObj[key] = removeUndefinedKeys(obj[key]);
+            newObj[key] = obj[key];
         } else if (obj[key] !== undefined) {
             newObj[key] = obj[key];
         }
@@ -91,4 +92,11 @@ export const transformMultiline = (toml: string): string => {
     });
 
     return transformed;
+}
+
+export const removeRootPathSeparator = (pathStr: string): string => {
+    if(pathStr.at(0) === sep) {
+        return pathStr.substring(1);
+    }
+    return pathStr;
 }

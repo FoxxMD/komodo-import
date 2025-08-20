@@ -2,13 +2,15 @@ import { childLogger, Logger } from "@foxxmd/logging";
 import { Container } from "../../common/dockerApi.js";
 import { StackCandidate, StackCandidateCompose } from "../../common/infrastructure/atomic.js";
 
-export const consolidateComposeStacks = (containers: Container[], parentLogger: Logger): StackCandidate[] => {
+export const consolidateComposeStacks = (containers: Container[], parentLogger: Logger): StackCandidateCompose[] => {
     const stacks: Record<string, StackCandidateCompose> = {};
     const logger = childLogger(parentLogger, 'Compose Parser')
 
-    for(const c of containers) {
+    logger.verbose('Finding Compose projects for reference...');
+
+    for (const c of containers) {
         const name = c.Labels['com.docker.compose.project'];
-        if(name !== undefined && stacks[name] === undefined) {
+        if (name !== undefined && stacks[name] === undefined) {
             const candidate: StackCandidateCompose = {
                 discovered: 'compose',
                 projectName: name,
@@ -18,18 +20,20 @@ export const consolidateComposeStacks = (containers: Container[], parentLogger: 
                 state: c.State
             }
             let ok = true;
-            for(const [k,v] of Object.entries(candidate)) {
-                if(v === undefined) {
+            for (const [k, v] of Object.entries(candidate)) {
+                if (v === undefined) {
                     logger.warn(`Cannot use ${name} compose project because ${k} label is missing`);
                     ok = false;
                 }
             }
-            if(!ok) {
+            if (!ok) {
                 continue;
             }
             logger.verbose(`Found Project '${candidate.projectName}' at working dir '${candidate.workingDir}'`)
             stacks[name] = candidate;
         }
     }
-    return Object.values(stacks);
+    const s = Object.values(stacks);
+    logger.verbose(`Found ${s.length} Compose projects`);
+    return s;
 }

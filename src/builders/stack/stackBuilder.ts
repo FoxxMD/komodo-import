@@ -1,169 +1,123 @@
-import { AnyStackConfig, FilesOnServerConfig, GitStackConfig } from "../../common/infrastructure/config/stackConfig.js";
+import { AnyStackConfig } from "../../common/infrastructure/config/stackConfig.js";
 import { TomlStack } from "../../common/infrastructure/tomlObjects.js";
-import { promises } from 'fs';
-import { findFolders, pathExistsAndIsReadable } from "../../common/utils/io.js";
+import { findFolders } from "../../common/utils/io.js";
 import { childLogger, Logger } from "@foxxmd/logging";
-import { formatIntoColumns, isUndefinedOrEmptyString, parseBool } from "../../common/utils/utils.js";
-import { detectGitRepo, GitRepoData, komodoRepoFromRemote, matchGitDataWithKomodo } from "../../common/utils/git.js";
+import { formatIntoColumns, parseBool } from "../../common/utils/utils.js";
 import { buildGitStack } from "./gitStack.js";
 import { join as joinPath, parse, ParsedPath } from 'path';
-import { DEFAULT_COMPOSE_GLOB, DEFAULT_ENV_GLOB } from "./stackUtils.js";
 import { buildFileStack } from "./filesOnServer.js";
 import { SimpleError } from "../../common/errors.js";
-import { DEFAULT_GLOB_FOLDER } from "../../common/infrastructure/atomic.js";
+import { DEFAULT_GLOB_FOLDER, DirectoryConfig, StackCandidateCompose, StackSourceOfTruth } from "../../common/infrastructure/atomic.js";
 import { DockerApi } from "../../common/dockerApi.js";
+import { consolidateComposeStacks } from "./composeUtils.js";
 
-export const buildStacksFromPath = async (path: string, options: AnyStackConfig, parentLogger: Logger): Promise<TomlStack[]> => {
+export class StackBuilder {
 
-    const {
-        composeFileGlob = DEFAULT_COMPOSE_GLOB,
-        envFileGlob = DEFAULT_ENV_GLOB,
-        folderGlob,
-        ignoreFolderGlob
-    } = options;
+    logger: Logger;
+    stackConfigOptions: AnyStackConfig;
 
-    let stackOptions = {
-        ...options,
-        writeEnv: parseBool(process.env.WRITE_ENV, false)
-    };
+    dirData: DirectoryConfig;
 
-    const logger = childLogger(parentLogger, 'Stacks');
+    composeCandidateStacks: StackCandidateCompose[] = [];
 
-    const docker = new DockerApi();
-    const containers = await docker.getContainers({label: 'com.docker.compose.project'})
+    docker: DockerApi;
 
-    let topDir: string;
-    try {
-        topDir = await promises.realpath(path);
-        logger.info(`Top Dir: ${path} -> Resolved: ${topDir}`);
-        pathExistsAndIsReadable(topDir)
-    } catch (e) {
-        throw new Error(`Could not access ${path}.${parseBool(process.env.IS_DOCKER) ? ' This is the path *in container* that is read so make sure you have mounted it on the host!' : ''}`);
+    constructor(stacksConfig: AnyStackConfig, dirs: DirectoryConfig, logger: Logger) {
+        this.stackConfigOptions = stacksConfig;
+        this.dirData = dirs;
+        this.logger = childLogger(logger, 'Stacks');
+        this.docker = new DockerApi();
     }
 
-    let gitData: GitRepoData;
-    try {
-        gitData = await detectGitRepo(path);
-        logger.verbose(`Detected top-level dir ${topDir} is a Git repo: Branch ${gitData[0].branch} | Remote ${gitData[1].remote} | URL ${gitData[1].url}`);
-        logger.verbose('Will treat this as a monorepo -- all subfolders will be built as Git-Repo Stacks using the same repo with Run Directory relative to repo root.');
-    } catch (e) {
-        if (e instanceof SimpleError) {
-            logger.verbose(`Top-level dir is not a git repo: ${e.message}`);
-            logger.verbose('Subfolders will be individually detected as Git repo or files-on-server Stacks')
-        } else {
-            throw e;
+    parseComposeProjects = async () => {
+        const containers = await this.docker.getContainers({ label: 'com.docker.compose.project' });
+        if (containers.length > 0) {
+            this.composeCandidateStacks = consolidateComposeStacks(containers, this.logger);
         }
     }
 
-    let stacksDir: string = topDir;
-    if (!isUndefinedOrEmptyString(process.env.GIT_STACKS_DIR) && gitData !== undefined) {
-        try {
-            stacksDir = await promises.realpath(joinPath(topDir, process.env.GIT_STACKS_DIR));
-            logger.info(`Git Stack Dir: ${process.env.GIT_STACKS_DIR} -> Resolved: ${stacksDir}`);
-            pathExistsAndIsReadable(stacksDir)
-        } catch (e) {
-            throw new Error(`Could not access ${stacksDir}.${parseBool(process.env.IS_DOCKER) ? ' This is the path *in container* that is read so make sure you have mounted it on the host!' : ''}`);
-        }
-    }
+    buildStacks = async (sourceOfTruth: StackSourceOfTruth): Promise<TomlStack[]> => {
 
-    let stacks: TomlStack[] = [];
+        this.logger.info(`Using ${sourceOfTruth === 'compose' ? ' parsed Compose projects' : 'child folders in SCAN_DIR'} to generate Stacks.`);
 
-    const dirs = await findFolders(stacksDir, folderGlob, ignoreFolderGlob)
-    const folderPaths = dirs.map(x => joinPath(stacksDir, x));
+        await this.parseComposeProjects();
 
-    logger.info(`Folder Glob: ${folderGlob ?? DEFAULT_GLOB_FOLDER}`);
-    logger.info(`Folder Ignore Glob${ignoreFolderGlob === undefined ? ' N/A ' : `: ${DEFAULT_GLOB_FOLDER}`}`);
-    logger.info(`Compose File Glob: ${composeFileGlob}`);
-    logger.info(`Env Glob: ${envFileGlob}`);
-    logger.info(`Processing Stacks for ${dirs.length} folders in ${stacksDir}:\n${formatIntoColumns(dirs, 3)}`);
+        const {
+            folderGlob,
+            ignoreFolderGlob
+        } = this.stackConfigOptions;
 
-    let hostParentPathVerified = false;
+        let folderPaths: string[] = [];
 
-    if (gitData !== undefined) {
-
-        let gitStackConfig: Partial<GitStackConfig> = {
-            inMonorepo: true
-        }
-        try {
-            const [provider, linkedRepo, repoHint] = await matchGitDataWithKomodo(gitData);
-            if (repoHint !== undefined) {
-                logger.warn(`All Stacks will be built without a linked repo: ${repoHint}`);
-            }
-            const [domain, repo] = komodoRepoFromRemote(gitData[1].url)
-            if (repo === undefined) {
-                gitStackConfig = {
-                    ...options,
-                    git_provider: provider?.domain ?? domain,
-                    git_account: provider?.username,
-                    repo
-                };
-            } else {
-                gitStackConfig = {
-                    ...options,
-                    linked_repo: linkedRepo.name,
+        if (sourceOfTruth === 'compose') {
+            for (const c of this.composeCandidateStacks) {
+                if (!c.workingDir.includes(this.dirData.host)) {
+                    this.logger.warn(`Compose project ${c.projectName} working dir '${c.workingDir}' is not present in Host Dir, cannot use project`);
+                    continue;
                 }
+                const convertedPath = c.workingDir.replace(this.dirData.host, this.dirData.mount);
+                this.logger.debug(`Compose project ${c.projectName} => Substituting in-environment path '${convertedPath}' for working dir '${c.workingDir}'`);
+                folderPaths.push(convertedPath);
             }
-        } catch (e) {
-            throw new Error('Cannot use top-level git for Stacks', { cause: e });
-        }
-
-        stackOptions = {
-            ...stackOptions,
-            ...gitStackConfig,
-            inMonorepo: true
-        }
-    }
-
-    for (const f of folderPaths) {
-
-        const pathInfo: ParsedPath = parse(f);
-        const folderLogger = childLogger(logger, `${pathInfo.name}${pathInfo.ext !== '' ? pathInfo.ext : ''}`);
-
-        if (gitData !== undefined) {
-            try {
-                stacks.push(await buildGitStack(f,
-                    {
-                        ...stackOptions,
-                        logger,
-                        hostParentPath: stacksDir === topDir ? undefined : stacksDir.replace(topDir, '').replace(/^\//, '')
-                    }));
-            } catch (e) {
-                folderLogger.error(new Error(`Unable to build Git Stack for folder ${f}`, { cause: e }));
-            }
+            this.logger.verbose(`Got ${folderPaths.length} valid compose project directories`);
         } else {
+            this.logger.info(`Folder Glob: ${folderGlob ?? DEFAULT_GLOB_FOLDER}`);
+            this.logger.info(`Folder Ignore Glob${ignoreFolderGlob === undefined ? ' N/A ' : `: ${DEFAULT_GLOB_FOLDER}`}`);
+
+            const dirs = await findFolders(this.dirData.scan, folderGlob, ignoreFolderGlob)
+            folderPaths = dirs.map(x => joinPath(this.dirData.scan, x));
+            this.logger.verbose(`Got ${folderPaths.length} folders in ${this.dirData.scan}:\n${formatIntoColumns(dirs, 3)}`);
+        }
+
+        let stacks: TomlStack[] = [];
+
+        let stackOptions = {
+            ...this.stackConfigOptions,
+            writeEnv: parseBool(process.env.WRITE_ENV, false)
+        };
+
+        for (const f of folderPaths) {
+
+            let composeFiles: string[] = [];
+            let projectName: string;
+
+            const folderStackOptions = {...stackOptions};
+
+            const matchedProject = this.composeCandidateStacks.find(x => x.workingDir.replace(this.dirData.host, this.dirData.mount) === f);
+            if(matchedProject !== undefined) {
+                projectName = matchedProject.projectName;
+                composeFiles = matchedProject.composeFilePaths.map(x => x.replace(matchedProject.workingDir, ''));
+                folderStackOptions.projectName = projectName;
+                folderStackOptions.composeFiles = composeFiles;
+            }
+
+
+            const pathInfo: ParsedPath = parse(f);
+            const folderLogger = childLogger(this.logger, `${pathInfo.name}${pathInfo.ext !== '' ? pathInfo.ext : ''}`);
 
             try {
                 stacks.push(await buildGitStack(f, {
-                    inMonorepo: false,
-                    ...stackOptions,
-                    logger
+                    ...folderStackOptions,
+                    logger: this.logger,
                 }));
                 continue;
             } catch (e) {
                 if (e instanceof SimpleError) {
-                    if (e.message.includes('does not have a .git folder')) {
-                        folderLogger.debug('Falling back to Files-On-Server, not a git repo');
-                    } else {
-                        folderLogger.verbose(`Falling back to Files-On-Server => ${e.message}`);
-                    }
+                    folderLogger.verbose(`Falling back to Files-On-Server => ${e.message}`);
                 } else {
                     folderLogger.error(new Error(`Unable to build Git Stack for folder ${f}`, { cause: e }));
                     continue;
                 }
             }
 
-            if (!hostParentPathVerified) {
-                if (isUndefinedOrEmptyString(stackOptions.hostParentPath)) {
-                    throw new Error('env HOST_PARENT_PATH is not set');
-                }
-                hostParentPathVerified = true;
-            }
             try {
-                stacks.push(await buildFileStack(f, { ...stackOptions, logger }));
+                stacks.push(await buildFileStack(f, { ...folderStackOptions, hostParentPath: this.dirData.host, logger: this.logger }));
             } catch (e) {
                 folderLogger.error(new Error(`Unable to build Files-On-Server Stack for folder ${f}`, { cause: e }));
             }
+
         }
+
+        return stacks;
     }
-    return stacks;
 }

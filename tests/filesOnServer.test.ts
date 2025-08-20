@@ -1,12 +1,10 @@
 import { describe, it } from 'mocha';
 import chai, { expect } from 'chai';
 import withLocalTmpDir from 'with-local-tmp-dir';
-import { mkdir, writeFile, chmod, constants } from 'node:fs/promises';
+import { mkdir, writeFile } from 'node:fs/promises';
 import path from "path";
 import { loggerTest } from "@foxxmd/logging";
 import { buildFileStack, BuildFileStackOptions } from '../src/builders/stack/filesOnServer.js';
-import { FilesOnServerConfig } from '../src/common/infrastructure/config/stackConfig.js';
-import { stripIndents } from 'common-tags';
 
 const DEFAULT_FOS_PATH = '/my/cool'
 const DEFAULT_SERVER = 'test-server';
@@ -115,6 +113,25 @@ describe('#FilesOnServer', function () {
 
                 expect(data.config.file_paths).to.not.be.undefined;
                 expect(data.config.file_paths.length).eq(2);
+            }, { unsafeCleanup: true });
+        });
+
+        it(`includes all compose files when provided as arg`, async function () {
+            await withLocalTmpDir(async () => {
+
+                const dir = path.join(process.cwd(), 'test_1');
+                await mkdir(path.join(dir, 'nested'), {recursive: true});
+                await writeFile(path.join(dir, 'nested', 'docker-compose.yaml'), '');
+
+                const data = await buildFileStack(dir, {
+                     ...defaultFOSConfig, 
+                     composeFileGlob: '**/{compose,docker-compose}*.yaml',
+                     composeFiles: [path.join(dir, 'nested', 'docker-compose.yaml')]
+                    });
+
+                expect(data.config.file_paths).to.not.be.undefined;
+                expect(data.config.file_paths.length).eq(1);
+                expect(data.config.file_paths[0]).eq('nested/docker-compose.yaml')
             }, { unsafeCleanup: true });
         });
 

@@ -1,8 +1,9 @@
 import { accessSync, constants, promises } from "fs";
-import pathUtil from "path";
+import pathUtil, { join, dirname } from "path";
 import { glob, GlobOptionsWithFileTypesUnset } from 'glob';
 import clone from 'clone';
-import { DEFAULT_GLOB_FOLDER } from "../infrastructure/atomic.js";
+import { DEFAULT_GLOB_FOLDER, DirectoryConfig, DirectoryConfigValues } from "../infrastructure/atomic.js";
+import { parseBool } from "./utils.js";
 
 export async function writeFile(path: any, text: any) {
     try {
@@ -79,6 +80,34 @@ export const findFilesRecurive = async (filePattern: string, fromDir: string, op
     }
 }
 
+export const findPathRecuriveParently = async (fromDir: string, path: string) => {
+
+    let currDirectory = fromDir;
+    let parentDirectory = fromDir;
+    let firstRun = true;
+
+    // https://hals.app/blog/recursively-read-parent-folder-nodejs/
+    while (firstRun || currDirectory !== parentDirectory) {
+
+        firstRun = false;
+
+        const files = await glob(path, {
+            cwd: parentDirectory,
+        });
+
+        if(files.length > 0) {
+            return join(parentDirectory, path);
+        }
+
+        // The trick is here:
+        // Using path.dirname() of a directory returns the parent directory!
+        currDirectory = parentDirectory
+        parentDirectory = dirname(parentDirectory);
+    }
+
+    return undefined;
+}
+
 export const sortComposePaths = (p: string[]): string[] => {
     const paths = clone(p);
     paths.sort((a, b) => {
@@ -144,4 +173,48 @@ export const findFolders = async (fromDir: string, filePattern: string = DEFAULT
 
 export const dirHasGitConfig = (paths: string[]): boolean => {
     return paths.some(x => x === '.git');
+}
+
+export const parseDirectoryConfig = async (dirConfig: DirectoryConfigValues = {}): Promise<[DirectoryConfigValues, DirectoryConfig]> => {
+    const {
+        mountVal = process.env.MOUNT_DIR,
+        hostVal = process.env.HOST_DIR ?? mountVal,
+        scanVal = process.env.SCAN_DIR ?? mountVal
+    } = dirConfig;
+
+    const configVal = {
+        mountVal,
+        hostVal,
+        scanVal
+    };
+
+    let mountDir: string,
+        hostDir: string,
+        scanDir: string;
+
+    try {
+        mountDir = await promises.realpath(mountVal);
+        pathExistsAndIsReadable(mountDir)
+    } catch (e) {
+        throw new Error(`Could not access directory for MOUNT_DIR ${mountVal}.${parseBool(process.env.IS_DOCKER) ? ' This is the path *in container* that is read so make sure you have mounted it on the host!' : ''}`);
+    }
+
+    if (hostVal === mountVal) {
+        hostDir = mountDir;
+    } else {
+        hostDir = hostVal;
+    }
+
+    if (scanVal === mountVal) {
+        scanDir = mountDir;
+    } else {
+        try {
+            scanDir = await promises.realpath(join(mountDir, scanVal));
+            pathExistsAndIsReadable(scanDir)
+        } catch (e) {
+            throw new Error(`Could not access directory for SCAN_DIR '${scanVal}' -- this should be the *relative* path from HOST_DIR that we look for stack-folders in.`);
+        }
+    }
+
+    return [configVal, { host: hostDir, scan: scanDir, mount: mountDir }]
 }

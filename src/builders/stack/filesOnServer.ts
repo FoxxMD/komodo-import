@@ -4,7 +4,7 @@ import { _PartialStackConfig } from 'komodo_client/dist/types.js';
 import { parse, ParsedPath, sep, join } from 'path';
 import { TomlStack } from "../../common/infrastructure/tomlObjects.js";
 import { readText } from "../../common/utils/io.js";
-import { isDebugMode, removeUndefinedKeys } from "../../common/utils/utils.js";
+import { isDebugMode, removeRootPathSeparator, removeUndefinedKeys } from "../../common/utils/utils.js";
 import { DEFAULT_COMPOSE_GLOB, DEFAULT_ENV_GLOB, parseEnvConfig, selectComposeFiles, selectEnvFiles } from "./stackUtils.js";
 
 export type BuildFileStackOptions = FilesOnServerConfig & { logger: Logger };
@@ -21,6 +21,8 @@ export const buildFileStack = async (path: string, options: BuildFileStackOption
         pollForUpdate,
         server,
         hostParentPath,
+        composeFiles = [],
+        projectName,
         writeEnv = false,
     } = options;
 
@@ -36,7 +38,7 @@ export const buildFileStack = async (path: string, options: BuildFileStackOption
 
     try {
         stack = {
-            name: folderName,
+            name: projectName ?? folderName,
             config: {
                 server,
                 run_directory: join(hostParentPath, folderName),
@@ -48,7 +50,12 @@ export const buildFileStack = async (path: string, options: BuildFileStackOption
             }
         };
 
-        stack.config.file_paths = await selectComposeFiles(composeFileGlob, path, logger);
+        if(composeFiles.length > 0) {
+            stack.config.file_paths = composeFiles.map(x => removeRootPathSeparator(x.replace(path, '')));
+        } else {
+            stack.config.file_paths = await selectComposeFiles(composeFileGlob, path, logger);
+        }
+
 
         stack.config = {
             ...stack.config,
@@ -68,7 +75,7 @@ export const buildFileStack = async (path: string, options: BuildFileStackOption
         throw new Error(`Error occurred while processing Stack for folder ${folderName}`, { cause: e });
     } finally {
         if (logJson) {
-            logger.debug(`Stack Config: ${JSON.stringify(stack)}}`);
+            logger.debug(`Stack Config: ${JSON.stringify(stack)}`);
         }
     }
 }
