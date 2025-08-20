@@ -4,8 +4,7 @@
 	"name": "Node.js",
 	// Or use a Dockerfile or Docker Compose file. More info: https://containers.dev/guide/dockerfile
 	"dockerComposeFile": [
-		"compose.yml",
-		"compose.mounts.yml"
+		"compose.yml"
 	],
 
 	"service": "app",
