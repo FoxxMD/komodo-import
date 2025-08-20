@@ -9,4 +9,6 @@ export interface CommonImportOptions {
     envFileGlob?: string
     folderGlob?: string
     ignoreFolderGlob?: string
+    composeGlob?: string
+    ignoreComposeGlob?: string
 }

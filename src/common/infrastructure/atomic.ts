@@ -13,6 +13,10 @@ export interface GitBranchStatus {
 
 export const DEFAULT_GLOB_FOLDER = '*';
 
+export const DEFAULT_GLOB_COMPOSE = '**/**';
+
+export const KOMODO_GLOB_IGNORE_COMPOSE = '/{etc,home/*}/komodo/**';
+
 export type StackDiscoveryMethod = 'compose' | 'monorepo' | 'folder';
 
 export type StackSourceOfTruth = 'compose' | 'dir';

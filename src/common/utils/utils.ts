@@ -20,7 +20,6 @@ export function parseBool(value: any, prev: any = false): boolean {
     throw new Error(`'${value.toString()}' is not a boolean value.`);
 }
 
-
 export const removeUndefinedKeys = <T extends Record<string, any>>(obj: T): T | undefined => {
     const newObj: any = {};
     Object.keys(obj).forEach((key) => {

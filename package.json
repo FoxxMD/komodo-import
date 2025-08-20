@@ -43,6 +43,7 @@
     "execa": "^9.6.0",
     "glob": "^11.0.3",
     "komodo_client": "^1.18.4",
+    "minimatch": "^10.0.3",
     "normalize-url": "^8.0.2",
     "object-hash": "^3.0.0",
     "p-event": "^6.0.0",

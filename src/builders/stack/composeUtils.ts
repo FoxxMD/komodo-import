@@ -29,11 +29,10 @@ export const consolidateComposeStacks = (containers: Container[], parentLogger: 
             if (!ok) {
                 continue;
             }
-            logger.verbose(`Found Project '${candidate.projectName}' at working dir '${candidate.workingDir}'`)
             stacks[name] = candidate;
         }
     }
     const s = Object.values(stacks);
-    logger.verbose(`Found ${s.length} Compose projects`);
+    logger.verbose(`Found ${s.length} candidate Compose projects`);
     return s;
 }
