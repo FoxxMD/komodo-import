@@ -138,3 +138,5 @@ build
 tmp-*
 
 config/*.toml
+
+.devcontainer/compose.mounts.yml

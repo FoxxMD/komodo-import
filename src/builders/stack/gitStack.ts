@@ -1,15 +1,13 @@
 import { Logger, childLogger } from "@foxxmd/logging";
-import { FilesOnServerConfig, GitStackConfig, GitStackLinkedConfig, GitStackStandaloneConfig } from "../../common/infrastructure/config/stackConfig.js";
+import { GitStackConfig } from "../../common/infrastructure/config/stackConfig.js";
 import { _PartialStackConfig } from 'komodo_client/dist/types.js';
-import { parse, ParsedPath, sep, join } from 'path';
+import { parse, ParsedPath, sep, join, dirname, resolve } from 'path';
 import { TomlStack } from "../../common/infrastructure/tomlObjects.js";
-import { dirHasGitConfig, findFilesRecurive, readDirectories, readText, sortComposePaths } from "../../common/utils/io.js";
-import { stripIndents } from "common-tags";
-import { isDebugMode, removeUndefinedKeys } from "../../common/utils/utils.js";
+import {  findPathRecuriveParently } from "../../common/utils/io.js";
+import { isDebugMode, removeRootPathSeparator, removeUndefinedKeys } from "../../common/utils/utils.js";
 import { DEFAULT_COMPOSE_GLOB, DEFAULT_ENV_GLOB, parseEnvConfig, selectComposeFiles, selectEnvFiles } from "./stackUtils.js";
 import { detectGitRepo, GitRepoData, komodoRepoFromRemote, matchGitDataWithKomodo, matchRemote, RemoteInfo } from "../../common/utils/git.js";
 import { SimpleError } from "../../common/errors.js";
-import { readFile } from "fs/promises";
 
 export type BuildGitStackOptions = GitStackConfig & { logger: Logger };
 
@@ -24,67 +22,80 @@ export const buildGitStack = async (path: string, options: BuildGitStackOptions)
         autoUpdate,
         pollForUpdate,
         server,
-        inMonorepo = false,
-        hostParentPath,
+        projectName,
+        composeFiles = [],
         writeEnv = false,
     } = options
 
-    let gitStackConfig: _PartialStackConfig;
+    let gitStackConfig: _PartialStackConfig = {}
 
     const pathInfo: ParsedPath = parse(path);
 
     const folderName = `${pathInfo.name}${pathInfo.ext !== '' ? pathInfo.ext : ''}`;
 
-    const monoRepoPath = inMonorepo ? (hostParentPath !== undefined ? join(hostParentPath, folderName) : undefined) : undefined;
+    let repoRunDir: string;
 
     const logger = childLogger(options.logger, [folderName, 'Git']);
 
-    if (inMonorepo === false) {
+    let nonGitReasons: string[] = [];
 
-        let gitData: GitRepoData;
-        try {
-            gitData = await detectGitRepo(path);
-        } catch (e) {
-            if (e instanceof SimpleError) {
-                throw new SimpleError(`Unable to parse path as git repo: ${e.message}`);
-            } else {
-                throw e;
-            }
-        }
-        logger.info(`Folder has tracked branch '${gitData[0].branch}' with valid remote '${gitData[1].remote}'`);
-
-        const [provider, repo, repoHint] = await matchGitDataWithKomodo(gitData);
-        if (repo === undefined) {
-            logger.verbose(`No linked repo because ${repoHint}`);
-            const [domain, repo] = komodoRepoFromRemote(gitData[1].url);
-            if (repo === undefined) {
-                throw new Error(`Could not parse repo from Remote URL ${gitData[1].url}`);
-            }
-            logger.debug(`Parsed Repo '${repo}' with ${provider?.domain !== undefined ? `provider` : 'URL'} domain '${provider?.domain ?? domain}' from Remote URL ${gitData[1].url}`);
-            if (provider?.username !== undefined) {
-                logger.debug(`Using provider username ${provider.username}`);
-            }
-            gitStackConfig = {
-                git_provider: provider?.domain ?? domain,
-                git_account: provider?.username,
-                repo
-            };
+    let gitData: GitRepoData;
+    try {
+        gitData = await detectGitRepo(path);
+        logger.info(`Current directory is a Git repo: Branch ${gitData[0].branch} | Remote ${gitData[1].remote} | URL ${gitData[1].url}`);
+    } catch (e) {
+        if (e instanceof SimpleError) {
+            nonGitReasons.push(`Current dir is not a git repo => ${e.message}`);
         } else {
-            logger.verbose(`Using linked repo ${repo.name}}`);
-            gitStackConfig = {
-                linked_repo: repo.name,
+            throw e;
+        }
+    }
+
+    if(gitData === undefined) {
+        const parentGitPath = await findPathRecuriveParently(path, '.git');
+        if (parentGitPath !== undefined) {
+            const parentGitDir = dirname(parentGitPath)
+            try {
+                gitData = await detectGitRepo(parentGitDir);
+                logger.info(`Detected parent path ${parentGitDir} is a Git repo: Branch ${gitData[0].branch} | Remote ${gitData[1].remote} | URL ${gitData[1].url}`);
+                logger.info('Will treat current directory as the run directory for this repo');
+                repoRunDir = removeRootPathSeparator(path.replace(parentGitDir, ''));
+                gitStackConfig.run_directory = repoRunDir;
+            } catch (e) {
+                if (e instanceof SimpleError) {
+                    // really shouldn't get here...
+                    nonGitReasons.push(`Parent dir ${parentGitDir} is not a git repo => ${e.message}`);
+                } else {
+                    throw e;
+                }
             }
         }
+    }
+
+    if(gitData === undefined) {
+        throw new SimpleError(`Could not parse as a git repo: ${nonGitReasons.join(' | ')}`);
+    }
+
+    const [provider, repo, repoHint] = await matchGitDataWithKomodo(gitData);
+    if (repo === undefined) {
+        logger.verbose(`No linked repo because ${repoHint}`);
+        const [domain, repo] = komodoRepoFromRemote(gitData[1].url);
+        if (repo === undefined) {
+            throw new Error(`Could not parse repo from Remote URL ${gitData[1].url}`);
+        }
+        logger.debug(`Parsed Repo '${repo}' with ${provider?.domain !== undefined ? `provider` : 'URL'} domain '${provider?.domain ?? domain}' from Remote URL ${gitData[1].url}`);
+        if (provider?.username !== undefined) {
+            logger.debug(`Using provider username ${provider.username}`);
+        }
+        gitStackConfig = {
+            ...gitStackConfig,
+            git_provider: provider?.domain ?? domain,
+            git_account: provider?.username,
+            repo
+        };
     } else {
-        gitStackConfig = removeUndefinedKeys(
-            {
-                linked_repo: (options as GitStackLinkedConfig).linked_repo,
-                git_provider: (options as GitStackStandaloneConfig).git_provider,
-                git_account: (options as GitStackStandaloneConfig).git_account,
-                repo: (options as GitStackStandaloneConfig).repo,
-                run_directory: hostParentPath !== undefined ? join(hostParentPath, folderName) : undefined
-            }
-        )
+        logger.verbose(`Using linked repo ${repo.name}}`);
+        gitStackConfig. linked_repo = repo.name;
     }
 
     let stack: TomlStack;
@@ -92,7 +103,7 @@ export const buildGitStack = async (path: string, options: BuildGitStackOptions)
 
     try {
         stack = {
-            name: folderName,
+            name: projectName ?? folderName,
             config: {
                 server,
                 registry_account: imageRegistryAccount,
@@ -103,9 +114,13 @@ export const buildGitStack = async (path: string, options: BuildGitStackOptions)
             }
         };
 
-        const composePaths = await selectComposeFiles(composeFileGlob, path, logger);
-        if(composePaths !== undefined) {
-            stack.config.file_paths = composePaths.map(x => inMonorepo ? join(monoRepoPath, x) : x);
+        if(composeFiles.length > 0) {
+            stack.config.file_paths = composeFiles.map(x => removeRootPathSeparator(x.replace(path, '')));
+        } else {
+            const composePaths = await selectComposeFiles(composeFileGlob, path, logger);
+            if(composePaths !== undefined) {
+                stack.config.file_paths = composePaths;
+            }
         }
 
         stack.config = {
@@ -113,7 +128,7 @@ export const buildGitStack = async (path: string, options: BuildGitStackOptions)
             ...await(parseEnvConfig(path, {
                 envFileGlob, 
                 writeEnv,
-                pathPrefix: monoRepoPath,
+                pathPrefix: repoRunDir,
                 komodoEnvName,
                 logger
             }))

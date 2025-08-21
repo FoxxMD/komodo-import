@@ -2,20 +2,18 @@ services:
   komodo-import:
     image: foxxmd/komodo-import:latest
     volumes:
-      ## ParentDirectory:FILES_ON_SERVER_DIR
-      - ./myprojects:/filesOnServer
-      
-      ## optional, TOML is saved to file here when OUTPUT_DIR env is present
-      #- ./output:/output
+      ## Mount the parent directory where all subfolders are compose projects
+      - /home/myUser/homelab:/filesOnServer
     environment:
-      - TZ=America/New_York
+      ## Same as host directory mounted above
+      - HOST_DIR=/home/myUser/homelab
+      ## where stacks are generated from. 'dir' or 'compose'
+      - STACKS_FROM=dir
       ## Komodo Server name to use for generated Stacks
       - SERVER_NAME=my-cool-server
-      ## ParentDirectory on the host use as Stack Run Directory prefix
-      - HOST_PARENT_PATH=/my/cool/path
 
       ## optional
-      #- FILES_ON_SERVER_DIR=/filesOnServer
+      #- TZ=America/New_York
       #- IMAGE_REGISTRY_PROVIDER=
       #- IMAGE_REGISTRY_ACCOUNT=
       #- AUTO_UPDATE=false
@@ -23,7 +21,4 @@ services:
       #- KOMODO_ENV_NAME=
       #- COMPOSE_FILE_GLOB=
       #- ENV_FILE_GLOB=
-
-      ## only saves to file if this ENV is present
-      #- OUTPUT_DIR=/output
     restart: no

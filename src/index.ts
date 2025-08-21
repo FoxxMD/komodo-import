@@ -16,7 +16,9 @@ import { exportToLog } from './exporters/exportToLog.js';
 import { exportToFile } from './exporters/exportToFile.js';
 import { exportToSync } from './exporters/exportToApiSync.js';
 import { getDefaultKomodoApi } from './common/utils/komodo.js';
-import { buildStacksFromPath } from './builders/stack/stackBuilder.js';
+import { StackBuilder } from './builders/stack/stackBuilder.js';
+import { parseDirectoryConfig } from './common/utils/io.js';
+import { DirectoryConfig, DirectoryConfigValues } from './common/infrastructure/atomic.js';
 
 dayjs.extend(utc)
 dayjs.extend(timezone);
@@ -34,8 +36,6 @@ process.on('uncaughtExceptionMonitor', (err, origin) => {
         initLogger.error(appError);
     }
 });
-
-const configDir = process.env.CONFIG_DIR || path.resolve(projectDir, `./config`);
 
 try {
 
@@ -55,6 +55,16 @@ try {
     logger.info(`Version: ${version}`);
 
     getDefaultKomodoApi(logger);
+
+    let dirData: [DirectoryConfigValues, DirectoryConfig];
+    try {
+        dirData = await parseDirectoryConfig();
+        logger.info(`Mount Dir : ${dirData[0].mountVal} -> Resolved: ${dirData[1].mount}`);
+        logger.info(`Host Dir  : ${dirData[0].hostVal} -> Resolved: ${dirData[1].host}`);
+        logger.info(`Scan Dir  : ${dirData[0].scanVal} -> Resolved: ${dirData[1].scan}`);
+    } catch (e) {
+        throw new Error('Could not parse required directories', {cause: e});
+    }
 
     const importOptions: CommonImportOptions = {
         server: process.env.SERVER_NAME,
@@ -79,8 +89,14 @@ try {
         hostParentPath: process.env.HOST_PARENT_PATH
     };
 
+    const stackBuilder = new StackBuilder(filesOnServerConfig, dirData[1], logger);
+
     let stacks: TomlStack[] = [];
-    stacks = await buildStacksFromPath(process.env.FILES_ON_SERVER_DIR, filesOnServerConfig, logger);
+    let stackModeVal = (process.env.STACKS_FROM ?? 'dir').toLocaleLowerCase();
+    if(stackModeVal !== 'compose' && stackModeVal !== 'dir') {
+        throw new Error(`STACKS_FROM must be either 'compose' or 'dir'`);
+    }
+    stacks = await stackBuilder.buildStacks(stackModeVal);//await buildStacksFromPath(process.env.FILES_ON_SERVER_DIR, filesOnServerConfig, logger);
 
     if (stacks.length === 0) {
         logger.info('No Stacks found! Nothing to do.');

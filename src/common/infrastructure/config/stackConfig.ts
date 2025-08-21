@@ -3,6 +3,8 @@ import { CommonImportOptions } from "./common.js";
 export interface CommonStackConfig extends CommonImportOptions {
         writeEnv?: boolean
         hostParentPath?: string,
+        composeFiles?: string[]
+        projectName?: string
 }
 
 export interface FilesOnServerConfig extends CommonStackConfig {

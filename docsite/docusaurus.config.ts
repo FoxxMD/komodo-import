@@ -87,6 +87,35 @@ const config: Config = {
     'docusaurus-theme-github-codeblock'
   ],
   plugins: [
+
+      // Custom plugin to modify Webpack config
+    function myPlugin(context, options) {
+      return {
+        name: 'custom-webpack-plugin',
+        configureWebpack(config, isServer, utils, content) {
+          return {
+            module: {
+              rules: [
+                {
+                  resourceQuery: /raw/,
+                  type: "asset/source",
+                },
+              ],
+            },
+          };
+        },
+      };
+    },
+        [
+      '@docusaurus/plugin-ideal-image',
+      {
+        quality: 70,
+        max: 1030, // max resized image's size.
+        min: 640, // min resized image's size. if original is lower, use that size.
+        steps: 2, // the max number of images generated between min and max (inclusive)
+        disableInDev: false,
+      },
+    ],
   ],
   themeConfig:
     {
@@ -152,7 +181,7 @@ const config: Config = {
       prism: {
         theme: themes.themes.github,
         darkTheme: themes.themes.dracula,
-        additionalLanguages: ['json','json5','typescript', 'docker', 'bash', 'ini']
+        additionalLanguages: ['json','json5','typescript', 'docker', 'bash', 'ini','yaml']
       },
       colorMode: {
         defaultMode: 'dark',

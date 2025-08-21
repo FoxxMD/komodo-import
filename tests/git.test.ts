@@ -11,6 +11,8 @@ import chaiAsPromised from 'chai-as-promised';
 import git from 'isomorphic-git';
 import fs from 'fs';
 import { execa, Options } from 'execa';
+import { faker } from '@faker-js/faker';
+import { readText } from '../src/common/utils/io.js';
 
 chai.use(chaiAsPromised);
 
@@ -215,32 +217,150 @@ describe('#Git', function () {
         });
     });
 
-    // describe('#GitStack', function () {
+    describe('#GitStack', function () {
 
-    //     it(`creates a valid stack`, async function () {
-    //         await withLocalTmpDir(async () => {
-    //             const dir = path.join(process.cwd(), 'test_1');
-    //             await mkdir(dir);
-    //             const localDir = path.join(dir, 'local');
-    //             //await mkdir(localDir);
-    //             const remoteDir = path.join(dir, 'remote');
-    //             await mkdir(remoteDir);
-    //             await git.init({ fs, dir: remoteDir });
-    //             await git.commit({
-    //                 fs,
-    //                 dir: remoteDir,
-    //                 author: {
-    //                     name: 'Mr. Test',
-    //                     email: 'mrtest@example.com',
-    //                 },
-    //                 message: 'Added the a.txt file'
-    //             });
-    //             // cannot yet clone local repo with isomorphic git
-    //             // https://github.com/isomorphic-git/isomorphic-git/issues/1263
-    //             await execa({ cwd: dir })`git clone remote local`
-    //             await expect(buildGitStack(localDir, defaultGitStandaloneConfig)).to.eventually.be.fulfilled;
-    //         }, { unsafeCleanup: true });
-    //     });
+        it(`creates a valid stack from top-dir git`, async function () {
+            await withLocalTmpDir(async () => {
+                const dir = path.join(process.cwd(), 'test_1');
+                await mkdir(dir);
+                await git.init({ fs, dir });
+                await git.commit({
+                    fs,
+                    dir,
+                    author: {
+                        name: 'Mr. Test',
+                        email: 'mrtest@example.com',
+                    },
+                    message: 'Added the a.txt file'
+                });
+                const rc = await readText(path.join(dir, '.git', 'config'));
+                const [fc, fakeData] = fakeGitConfig();
+                await writeFile(path.join(dir, '.git', 'config'), `${rc}\n${fc}`);
 
-    // });
+                const stack = await buildGitStack(dir, defaultGitStandaloneConfig);
+                expect(stack.config.repo).eq(`${fakeData.user}/${fakeData.repo}`);
+
+            }, { unsafeCleanup: true });
+        });
+
+        it(`uses relative path for compose files`, async function () {
+            await withLocalTmpDir(async () => {
+                const dir = path.join(process.cwd(), 'test_1');
+                await mkdir(dir);
+                await mkdir(path.join(dir, 'nested'))
+                await writeFile(path.join(dir, 'nested', 'compose.yml'), '');
+                await git.init({ fs, dir });
+                await git.commit({
+                    fs,
+                    dir,
+                    author: {
+                        name: 'Mr. Test',
+                        email: 'mrtest@example.com',
+                    },
+                    message: 'Added the a.txt file'
+                });
+
+                const rc = await readText(path.join(dir, '.git', 'config'));
+                const [fc, fakeData] = fakeGitConfig();
+                await writeFile(path.join(dir, '.git', 'config'), `${rc}\n${fc}`);
+
+                const stack = await buildGitStack(dir, defaultGitStandaloneConfig);
+                expect(stack.config.file_paths).to.not.be.undefined;
+                expect(stack.config.file_paths[0]).eq('nested/compose.yml');
+
+            }, { unsafeCleanup: true });
+        });
+
+        it(`sets relative path from parent when git is above dir`, async function () {
+            await withLocalTmpDir(async () => {
+                const dir = path.join(process.cwd(), 'test_1');
+                await mkdir(dir);
+                await mkdir(path.join(dir, 'nested', 'docker'), {recursive: true})
+                await writeFile(path.join(dir, 'nested', 'docker', 'compose.yml'), '');
+                await git.init({ fs, dir });
+                await git.commit({
+                    fs,
+                    dir,
+                    author: {
+                        name: 'Mr. Test',
+                        email: 'mrtest@example.com',
+                    },
+                    message: 'Added the a.txt file'
+                });
+
+                const rc = await readText(path.join(dir, '.git', 'config'));
+                const [fc, fakeData] = fakeGitConfig();
+                await writeFile(path.join(dir, '.git', 'config'), `${rc}\n${fc}`);
+
+                const stack = await buildGitStack(path.join(dir, 'nested'), defaultGitStandaloneConfig);
+                expect(stack.config.run_directory).to.not.be.undefined;
+                expect(stack.config.run_directory).eq('nested');
+                expect(stack.config.file_paths).to.not.be.undefined;
+                expect(stack.config.file_paths[0]).eq('docker/compose.yml');
+
+            }, { unsafeCleanup: true });
+        });
+
+        it(`determines relative path for compose files when argument provided`, async function () {
+            await withLocalTmpDir(async () => {
+                const dir = path.join(process.cwd(), 'test_1');
+                await mkdir(dir);
+                await mkdir(path.join(dir, 'nested', 'docker'), {recursive: true})
+                await writeFile(path.join(dir, 'nested', 'docker', 'compose.yml'), '');
+                await git.init({ fs, dir });
+                await git.commit({
+                    fs,
+                    dir,
+                    author: {
+                        name: 'Mr. Test',
+                        email: 'mrtest@example.com',
+                    },
+                    message: 'Added the a.txt file'
+                });
+
+                const rc = await readText(path.join(dir, '.git', 'config'));
+                const [fc, fakeData] = fakeGitConfig();
+                await writeFile(path.join(dir, '.git', 'config'), `${rc}\n${fc}`);
+
+                const stack = await buildGitStack(path.join(dir, 'nested'), {
+                    ...defaultGitStandaloneConfig, 
+                    composeFiles: [path.join(dir, 'nested', 'docker', 'compose.yml')]
+                });
+                expect(stack.config.run_directory).to.not.be.undefined;
+                expect(stack.config.run_directory).eq('nested');
+                expect(stack.config.file_paths).to.not.be.undefined;
+                expect(stack.config.file_paths[0]).eq('docker/compose.yml');
+
+            }, { unsafeCleanup: true });
+        });
+
+    });
 });
+
+interface FakeGitConfig {
+    user?: string
+    repo?: string
+    domain?: string
+}
+const fakeGitConfig = (options: FakeGitConfig = {}): [string, Required<FakeGitConfig>] => {
+
+    const {
+        domain = 'github.com',
+        user = faker.internet.userName(),
+        repo = `${faker.animal.type()}-${faker.word.adjective()}`
+    } = options;
+
+    const used: Required<FakeGitConfig> = {
+        domain,
+        user,
+        repo
+    };
+
+    const configContents = `[remote "origin"]
+    url = https://${domain}/${user}/${repo}
+    fetch = +refs/heads/*:refs/remotes/origin/*
+[branch "master"]
+	remote = origin
+	merge = refs/heads/master`;
+    return [configContents, used]
+}

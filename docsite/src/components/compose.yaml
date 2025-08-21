@@ -1,0 +1,7 @@
+services:
+  komodo-import:
+    image: foxxmd/komodo-import:latest
+    restart: no
+    volumes:
+      - ./home/myUser/homelab:/filesOnServer
+    environment:

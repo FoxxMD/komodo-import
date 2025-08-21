@@ -23,7 +23,7 @@ export class KomodoApi {
     cachedGitProviders?: ListGitProviderAccountsResponse;
 
     constructor(logger?: Logger, options?: KomodoApiOptions) {
-        this.logger = childLogger(logger ?? initLogger()[0], 'Komodo API');
+        this.logger = childLogger(logger ?? initLogger(), 'Komodo API');
         this.options = options;
         if(process.env.KOMODO_URL !== undefined) {
             this.urlData = normalizeWebAddress(process.env.KOMODO_URL);
