@@ -151,7 +151,7 @@ export class StackBuilder {
                 stacks.push(await buildFileStack(f, {
                     ...folderStackOptions,
                     writeEnv: writeEnvFolder,
-                    hostParentPath: this.dirData.host, 
+                    hostParentPath: this.dirData.scan, 
                     logger: this.logger }));
             } catch (e) {
                 folderLogger.error(new Error(`Unable to build Files-On-Server Stack for folder ${f}`, { cause: e }));
