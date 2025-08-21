@@ -1,0 +1,13 @@
+socket-proxy:
+  image: lscr.io/linuxserver/socket-proxy:latest
+  environment:
+    - CONTAINERS=1
+    - INFO=1
+    - POST=0
+    - PING=1
+    - VERSION=1
+  volumes:
+        - /var/run/docker.sock:/var/run/docker.sock:ro
+  read_only: true
+  tmpfs:
+    - /run

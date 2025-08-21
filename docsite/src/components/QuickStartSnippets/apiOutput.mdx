@@ -1,0 +1,41 @@
+import Image from '@theme/IdealImage';
+import syncExample from './sync-resource-file.png'
+
+<details>
+
+<summary>Komodo Example</summary>
+
+```shell
+docker compose up --no-log-prefix
+```
+```
+INFO : [Init] Debug Mode: NO
+INFO : [App] Version: 0.1.0
+INFO : [App] Files On Server Dir ENV: /filesOnServer -> Resolved: /filesOnServer
+INFO : [App] [Files On Server] Processing Stacks for 2 folders:
+/filesOnServer/immich
+/filesOnServer/plex
+/filesOnServer/uptime-kuma
+INFO : [App] [Files On Server] Compose File Glob: **/{compose,docker-compose}*.y?(a)ml
+INFO : [App] [Files On Server] Env Glob: **/.env
+INFO : [App] [Files On Server] [compose] Found Stack 'compose' at dir /filesOnServer/compose.yaml
+WARN : [App] [Files On Server] [compose] Did not find any files patterns matching compose glob
+INFO : [App] [Files On Server] [compose] Stack config complete
+
+...
+
+INFO : [App] [Files On Server] Built Stack configs for 3 folders
+INFO : [App] Copy the text between the scissors to use as the *Resource File* contents within your Resource Sync
+
+...
+
+INFO   : [App] [Sync API] Using 'komodo-import' as Sync Name
+VERBOSE: [App] [Sync API] KOMODO_URL: http://192.168.0.101:9120 | Normalized: http://192.168.0.101:9120/
+INFO   : [App] [Sync API] Resource Sync created.
+INFO   : [App] [Sync API] Resource Sync URL: http://192.168.0.101:9120/resource-syncs/689a41a04ed1b642f3053f57
+```
+
+The [Sync Resource](../usage/resourceSync#verify-sync-changes) is automatically created for you (but not executed!)
+
+<Image img={syncExample}/>
+</details>

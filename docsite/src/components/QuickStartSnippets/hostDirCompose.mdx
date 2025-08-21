@@ -1,0 +1,33 @@
+When using `STACKS_FROM=compose` this should be the the most top-level directory that all projects are contained within, at some level.
+
+<details>
+
+<summary>Example</summary>
+
+`docker compose ls` reveals these projects:
+
+```
+NAME     STATUS   CONFIG FILES
+immich   running  /home/myUser/homelab/immich/compose.yaml
+plex     running  /home/myUser/homelab/plex/docker-compose.yaml
+project1 running  /home/myUser/localDev/myProjects/project1/compose.yaml
+```
+
+```
+.
+└── /home/myUser
+    ├── homeLab
+    │   ├── immich
+    │   │   └── compose.yaml
+    │   └── plex
+    │       ├── docker-compose.yaml
+    │       └── .git
+    └── localDev
+        └── myProjects
+            └── project1
+                └── compose.yaml
+```
+
+Then **Host Directory** should be `/home/myUser`
+
+</details>

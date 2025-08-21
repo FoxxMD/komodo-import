@@ -1,0 +1,67 @@
+<details>
+
+<summary>Console Output Example</summary>
+
+```shell
+docker compose up --no-log-prefix
+```
+```
+INFO : [Init] Debug Mode: NO
+INFO : [App] Version: 0.1.0
+INFO : [App] Files On Server Dir ENV: /filesOnServer -> Resolved: /filesOnServer
+INFO : [App] [Files On Server] Processing Stacks for 2 folders:
+/filesOnServer/immich
+/filesOnServer/plex
+/filesOnServer/uptime-kuma
+INFO : [App] [Files On Server] Compose File Glob: **/{compose,docker-compose}*.y?(a)ml
+INFO : [App] [Files On Server] Env Glob: **/.env
+INFO : [App] [Files On Server] [compose] Found Stack 'compose' at dir /filesOnServer/compose.yaml
+WARN : [App] [Files On Server] [compose] Did not find any files patterns matching compose glob
+INFO : [App] [Files On Server] [compose] Stack config complete
+
+...
+
+INFO : [App] [Files On Server] Built Stack configs for 3 folders
+INFO : [App] Copy the text between the scissors to use as the *Resource File* contents within your Resource Sync
+
+✂️  ✂️  ✂️  ✂️  ✂️  ✂️  ✂️  ✂️  ✂️  ✂️  ✂️  ✂️
+
+[[stack]]
+name = "immich"
+
+[stack.config]
+server = "my-cool-server"
+run_directory = "/home/myUser/homelab/immich"
+files_on_host = true
+auto_update = false
+poll_for_updates = false
+file_paths = [ "docker/docker-compose.yaml" ]
+
+[[stack]]
+name = "plex"
+
+[stack.config]
+server = "my-cool-server"
+run_directory = "/home/myUser/homelab/plex"
+files_on_host = true
+auto_update = false
+poll_for_updates = false
+
+[[stack]]
+name = "uptime-kuma"
+
+[stack.config]
+server = "my-cool-server"
+run_directory = "/home/myUser/homelab/uptime-kuma"
+files_on_host = true
+auto_update = false
+poll_for_updates = false
+env_file_path = ".komodoEnv"
+additional_env_files = [ ".env" ]
+✂️  ✂️  ✂️  ✂️  ✂️  ✂️  ✂️  ✂️  ✂️  ✂️  ✂️  ✂️
+INFO   : [App] Done!
+```
+
+Copy the text between the scissors and [create a new Sync Resource in Komodo](../usage/resourceSync/#create-sync-resource)
+
+</details>

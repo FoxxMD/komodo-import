@@ -5,170 +5,43 @@ sidebar_position: 1
 
 import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
+import QuickstartCompose from "../src/components/QuickstartCompose";
 
-## Scenario
+## Prerequisites
 
 * You have Komodo already setup
 * You have installed [Periphery](https://komo.do/docs/connect-servers) on a machine
   * The Komodo [Server](https://komo.do/docs/resources#server) name is `my-cool-server`
-  * The machine is currently using dockge and has all of its compose projects located in one folder like this:
 
-```
-.
-└── /home/myUser/homelab/
-    ├── immich/
-    │   └── compose.yaml
-    ├── plex/
-    │   └── docker-compose.yaml
-    └── uptime-kuma/
-        └── compose.yaml
-```
+## Create Your Scenario
 
-You want to import all of the existing compose projects into Komodo as [Files On Server](../usage/overview#files-on-server) [Stacks](https://komo.do/docs/resources#stack) attached to `my-cool-server`.
+**Follow the directions below, select your options, and fill in all fields to generate a customized Docker Compose file for your specific scenario.**
 
-:::tip
+<QuickstartCompose/>
 
-Using git repositories instead of plain folders? Check out the [Git Repo Stack docs](../usage/overview#git-repo)
+## Generate Stacks
 
-:::
+Run the customized `compose.yaml` from above with `docker compose` to generate Komodo Stacks from existing projects on your machine!
 
-## Create Docker Compose File
-
-Use the [example `compose.yaml` file from the repository](https://github.com/FoxxMD/komodo-import/blob/main/compose.yaml) as a starting point.
-
-* Bind `/home/myUser/homelab/` into the container at `/filesOnServer` so Komodo Import can scan the parent folder (this is the same for plain folder and git repo stack methods)
-* Define `HOST_PARENT_PATH=/home/myUser/homelab` so Komodo Import knows how to create Run Directory in a Komodo Stack correctly
-
-```yaml
-services:
-  komodo-import:
-    image: foxxmd/komodo-import:latest
-    volumes:
-      ## ParentDirectory:FILES_ON_SERVER_DIR
-      - /home/myUser/homelab:/filesOnServer
-      
-      ## optional, TOML is saved to file here when OUTPUT_DIR env is present
-      #- ./output:/output
-    environment:
-      - TZ=America/New_York
-      ## Komodo Server name to use for generated Stacks
-      - SERVER_NAME=my-cool-server
-      ## ParentDirectory on the host use as Stack Run Directory prefix
-      - HOST_PARENT_PATH=/home/myUser/homelab
-    restart: no
+```bash
+# in the same directory as compose.yaml...
+docker compose up --no-log-prefix
 ```
 
-## Choose Desired Output
+How the Stacks will be generated is determined by what you chose in **Step 4**. Refer to the expandable **Examples** in that step.
 
-<Tabs groupId="output" queryString>
-<TabItem value="console" label="Console">
-  This [Output](../usage/overview#outputs) renders the Sync Resource TOML to docker logs. Run komodo-import with `--no-log-prefix` to get the generated TOML output for a Sync Resource.
+## Next Steps
 
-  ```shell
-  docker compose up --no-log-prefix
-  ```
-    ```
-  [2025-08-11 14:06:19.080 -0400] INFO   : [Init] Debug Mode: NO
-[2025-08-11 14:06:19.094 -0400] INFO   : [App] Version: 0.1.0
-[2025-08-11 14:06:19.095 -0400] INFO   : [App] Files On Server Dir ENV: /filesOnServer -> Resolved: /filesOnServer
-[2025-08-11 14:06:19.096 -0400] INFO   : [App] [Files On Server] Processing Stacks for 2 folders:
-/filesOnServer/immich
-/filesOnServer/plex
-/filesOnServer/uptime-kuma
-[2025-08-11 14:06:19.096 -0400] INFO   : [App] [Files On Server] Compose File Glob: **/{compose,docker-compose}*.y?(a)ml
-[2025-08-11 14:06:19.097 -0400] INFO   : [App] [Files On Server] Env Glob: **/.env
-[2025-08-11 14:06:19.097 -0400] INFO   : [App] [Files On Server] [compose] Found Stack 'compose' at dir /filesOnServer/compose.yaml
-[2025-08-11 14:06:19.103 -0400] WARN   : [App] [Files On Server] [compose] Did not find any files patterns matching compose glob
-[2025-08-11 14:06:19.103 -0400] INFO   : [App] [Files On Server] [compose] Stack config complete
+There are many more options (environmental variables) that can be used to customize how Stacks are generated, all found in [Usage](../usage/overview#stacks) docs. Some customizations that might interest you:
 
-...
+* [Common Stack options](../usage/overview#common-stack-configuration)
+  * Set image registry provider/account
+  * Set defaults for polling for new images (`POLL_FOR_UPDATE`) and auto updating (`AUTO_UPDATE`)
+  * Set what compose files (`COMPOSE_FILE_GLOB`) and .env files (`ENV_FILE_GLOB`) to include, per Stack
+* For **Directory** generated stacks...
+  * Include (`FOLDER_GLOB`) or exclude (`FOLDER_IGNORE_GLOB`) folders based on patterns
+* Configure Komodo Import to use the Komodo API for better integration
+  * Uses existing Linked Repos for Git Based Stacks
+  * Automatically configures Git Based Stacks to use existing, private Git Provider if git URL domains match
 
-[2025-08-11 14:06:19.118 -0400] INFO   : [App] [Files On Server] Built Stack configs for 3 folders
-[2025-08-11 14:06:19.119 -0400] INFO   : [App] Copy the text between the scissors to use as the *Resource File* contents within your Resource Sync
-
-✂️  ✂️  ✂️  ✂️  ✂️  ✂️  ✂️  ✂️  ✂️  ✂️  ✂️  ✂️
-
-[[stack]]
-name = "immich"
-
-[stack.config]
-server = "my-cool-server"
-run_directory = "/home/myUser/homelab/immich"
-files_on_host = true
-auto_update = false
-poll_for_updates = false
-file_paths = [ "docker/docker-compose.yaml" ]
-
-[[stack]]
-name = "plex"
-
-[stack.config]
-server = "my-cool-server"
-run_directory = "/home/myUser/homelab/plex"
-files_on_host = true
-auto_update = false
-poll_for_updates = false
-
-[[stack]]
-name = "uptime-kuma"
-
-[stack.config]
-server = "my-cool-server"
-run_directory = "/home/myUser/homelab/uptime-kuma"
-files_on_host = true
-auto_update = false
-poll_for_updates = false
-env_file_path = ".komodoEnv"
-additional_env_files = [ ".env" ]
-✂️  ✂️  ✂️  ✂️  ✂️  ✂️  ✂️  ✂️  ✂️  ✂️  ✂️  ✂️
-[2025-08-11 14:06:19.119 -0400] INFO   : [App] Done!
-```
-
-Now, [manually create a Sync Resource](../usage/resourceSync#create-sync-resource) and Execute to import your projects.
-
-Or, use [Sync Api](./?output=sync-api#choose-desired-output) output instead to directly write the Sync Resource to Komodo.
-</TabItem>
-<TabItem value="sync-api" label="Sync API">
-
-This [Output](../usage/overview#outputs) writes the Sync Resource directly to your Komodo instance (but does not execute it!)
-
-Create an [API Key and Secret](../usage/overview#api-sync) in Komodo, then add it to your Komodo Import `compose.yaml`:
-
-```yaml
-services:
-  komodo-import:
-    image: foxxmd/komodo-import:latest
-    volumes:
-      ## ParentDirectory:FILES_ON_SERVER_DIR
-      - /home/myUser/homelab:/filesOnServer
-      
-      ## optional, TOML is saved to file here when OUTPUT_DIR env is present
-      #- ./output:/output
-    environment:
-      - TZ=America/New_York
-      ## Komodo Server name to use for generated Stacks
-      - SERVER_NAME=my-cool-server
-      ## ParentDirectory on the host use as Stack Run Directory prefix
-      - HOST_PARENT_PATH=/home/myUser/homelab
-
-      - KOMODO_URL=http://192.168.0.101:9120
-      - API_KEY=K-3A6btIPZYeBuD5ebSa9uD5ebuD5ebHIjYxT5sc
-      - API_SECRET=S-qnaXD1frutYlfC2ZYlfCSzqiYlfC1WYlfCVR34Yj4
-    restart: no
-```
-
-Run komodo-import to create the Sync Resource
-
-```shell
-$ docker compose up --no-log-prefix
-...
-[2025-08-11 17:46:54.030 -0400] INFO   : [App] [Sync API] Using 'komodo-import' as Sync Name
-[2025-08-11 17:46:54.032 -0400] VERBOSE: [App] [Sync API] KOMODO_URL: http://192.168.0.101:9120 | Normalized: http://192.168.0.101:9120/
-[2025-08-11 17:46:54.411 -0400] INFO   : [App] [Sync API] Resource Sync created.
-[2025-08-11 17:46:54.411 -0400] INFO   : [App] [Sync API] Resource Sync URL: http://192.168.0.101:9120/resource-syncs/689a41a04ed1b642f3053f57
-```
-
-Then continue to [verifying the Sync Resource](../usage/resourceSync#verify-sync-changes) in Komodo and Executing it to import your projects.
-
-</TabItem>
-</Tabs>
+Additionally, review the [Sync Resource](../usage/resourceSync) guide to learn how to use them for creating Stacks in Komodo.
