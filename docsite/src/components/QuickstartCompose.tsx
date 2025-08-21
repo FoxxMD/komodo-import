@@ -187,7 +187,7 @@ const QuickstartCompose = (props: AIOProps) => {
 
     return <Fragment>
 
-        <h3>1. What source to generate Stacks from?</h3>
+        <h3>1. What <a href="../usage/overview#stack-sources">Stack Sources</a> to generate Stacks from?</h3>
 
         <p>
             <ButtonGroup 
@@ -214,7 +214,7 @@ const QuickstartCompose = (props: AIOProps) => {
         <h3>2. Where are your existing projects located on your machine?</h3>
 
         <p>
-            <label className="margin-right--sm" htmlFor="hostDir"><strong>Host Directory:</strong></label>
+            <label className="margin-right--sm" htmlFor="hostDir"><strong><a href="../usage/overview#host-directory">Host Directory:</a></strong></label>
             <input id="hostDir" type="text" placeholder="/home/myUser/homelab" onChange={handleHostInputChange} value={hostInputValue}/>
         </p>
 
@@ -230,6 +230,8 @@ const QuickstartCompose = (props: AIOProps) => {
         </p>
 
         <h3>4. Where should generated Stacks be created?</h3>
+
+        <p>Choose one or more <a href="../usage/overview/#outputs-1">Outputs</a>:</p>
 
         <p><Button className="margin-right--md" label="Console" link="#" variant="primary" disabled/> <Button label="Komodo" link="#" variant="primary" 
         outline={!composeState.api}

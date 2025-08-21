@@ -34,13 +34,13 @@ How the Stacks will be generated is determined by what you chose in **Step 4**. 
 
 There are many more options (environmental variables) that can be used to customize how Stacks are generated, all found in [Usage](../usage/overview#stacks) docs. Some customizations that might interest you:
 
-* [Common Stack options](../usage/overview#common-stack-configuration)
+* [Common Stack options](../usage/overview#stack-configuration)
   * Set image registry provider/account
   * Set defaults for polling for new images (`POLL_FOR_UPDATE`) and auto updating (`AUTO_UPDATE`)
   * Set what compose files (`COMPOSE_FILE_GLOB`) and .env files (`ENV_FILE_GLOB`) to include, per Stack
 * For **Directory** generated stacks...
   * Include (`FOLDER_GLOB`) or exclude (`FOLDER_IGNORE_GLOB`) folders based on patterns
-* Configure Komodo Import to use the Komodo API for better integration
+* Configure Komodo Import to use the [Komodo API](../usage/overview#komodo-api) for better integration
   * Uses existing Linked Repos for Git Based Stacks
   * Automatically configures Git Based Stacks to use existing, private Git Provider if git URL domains match
 

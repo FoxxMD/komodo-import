@@ -8,6 +8,9 @@ import TabItem from '@theme/TabItem';
 import CodeBlock from '@theme/CodeBlock';
 import AIOExample from "../../src/components/AIOExample";
 import FileExample from "../../src/components/FileExample";
+import TreeDirectory from '../../src/components/snippets/_directoryTree.mdx'
+import TreeCompose from '../../src/components/snippets/_composeTree.mdx'
+import ComposeExample from '../../src/components/snippets/_composeExample.mdx'
 
 ## Key Concepts
 
@@ -34,7 +37,6 @@ These are **environmental variables** supplied to KI to:
 These are where and how KI puts the Resources created from [Inputs](#inputs):
 
 * Log to output (docker logs, node console)
-* Log to file
 * Export to Komodo API (create Resource Sync, etc.)
 
 ## Inputs
@@ -43,119 +45,253 @@ These are where and how KI puts the Resources created from [Inputs](#inputs):
 
 KI can create Komodo [Stack](https://komo.do/docs/resources#stack) Resources from existing resources on your machine.
 
-##### Common Stack Configuration
+It will automatically detect what type of Stack to create based on the presence of git folders/data:
 
-These environmental variables are applicable to all Stack types below.
+* Komodo **Files On Server** Stack => compose project/folder without a `.git` folder
+* Komodo **Git Repo** Stacks => compose project/folder with a `.git` folder or with a parent folder containing a `.git` folder
+
+#### Stack Sources
+
+KI can generate Stacks from existing projects on your machine using one of two methods:
+
+<Tabs groupId="stacksFrom" queryString>
+  <TabItem value="dir" label="Directory">
+    For **Directory** (`STACKS_FROM=dir`), Komodo Import will try to generate Stacks from each immediate **subfolder** inside the directory mounted into the container.
+
+
+    <details>
+
+    <summary>Example</summary>
+
+    <TreeDirectory/>
+
+    Using `STACKS_FROM=dir` with [host directory](#host-directory) `/home/myUser/homelab` would produce Stacks for `immich` `plex` and `uptime-kuma`.
+
+    </details>
+
+    </TabItem>
+  <TabItem value="compose" label="Compose Projects">
+    For **Compose Projects** (`STACKS_FROM=compose`), Komodo Import will try to generate Stacks from existing projects on your machine that were created with `docker compose up`.
+
+    <details>
+
+    <summary>Example</summary>
+
+    <ComposeExample/>
+
+    * Using `STACKS_FROM=dir` with [host directory](#host-directory) `/home/myUser` would produce Stacks for `immich` `plex` and `project1`.
+    * It **would not** generate a Stack for `owncloud` since it was not created with `docker compose up` yet.
+
+    </details>
+
+    To use **Compose Projects** you must give Komodo Import access to Docker. This can be done by mounting `docker.sock` into the container or connecting it to a proxy service like [docker-socket-proxy](https://github.com/Tecnativa/docker-socket-proxy).
+
+    <details>
+
+    <summary>Using `socket-proxy` (recommended)</summary>
+
+    Add a socket-proxy service to your compose file and set the env `DOCKER_HOST` so Komodo Import knows how to connect to Docker:
+
+    ```yaml title="compose.yaml"
+    services:
+      komodo-import:
+      # ...
+        environment:
+          # ...
+          # add to existing environment
+          - DOCKER_HOST=tcp://socket-proxy:2375
+      socket-proxy:
+        image: lscr.io/linuxserver/socket-proxy:latest
+        environment:
+          - CONTAINERS=1
+          - INFO=1
+          - POST=0
+          - PING=1
+          - VERSION=1
+        volumes:
+              - /var/run/docker.sock:/var/run/docker.sock:ro
+        read_only: true
+        tmpfs:
+          - /run
+    ```
+    </details>
+
+    <details>
+
+    <summary>Mounting `docker.sock`</summary>
+
+    Mount `/var/run/docker.sock` as a volume into the container:
+
+    ```yaml title="compose.yaml"
+    services:
+      komodo-import:
+      # ...
+      volumes:
+        # ...
+        # add to existing volumes
+        - /var/run/docker.sock:/var/run/docker.sock:ro
+    ```
+    </details>
+  </TabItem>
+</Tabs>
+
+#### Host Directory
+
+The directory on the **Host** machine that should be mounted into the Komodo Import container depends on which [Stack Source](#stack-sources) you are using.
+
+* The host directory should be mounted to `/filesOnServer` in the container.
+* **The host directory should also be set for `HOST_DIR` env.**
+
+<Tabs groupId="stacksFrom" queryString>
+  <TabItem value="dir" label="Directory">
+    For **Directory** (`STACKS_FROM=dir`) use the **parent folder** containing all of the immediate **subfolders** that should be generated as Stacks.
+
+    <details>
+
+    <summary>Example</summary>
+
+    <TreeDirectory/>
+
+    Directory should be `home/myUser/homelab`:
+
+    ```yaml title="compose.yaml"
+    services:
+      komodo-import:
+      # ...
+        volumes:
+          - /home/myUser/homelab:/filesOnServer
+        environment:
+          - HOST_DIR=/home/myUser/homelab
+    ```
+    </details>
+
+    </TabItem>
+  <TabItem value="compose" label="Compose Projects">
+    For **Compose Projects** (`STACKS_FROM=compose`) use the closest **parent folder** that contains all discovered compose project Config Files (`docker compose ls`).
+
+    <details>
+
+    <summary>Example</summary>
+
+    <TreeCompose/>
+
+    Directory should be `/home/myUser` because projects are found under both `localDev` and `homeLab`:
+
+    ```yaml itle="compose.yaml"
+    services:
+      komodo-import:
+      # ...
+        volumes:
+          - /home/myUser:/filesOnServer
+        environment:
+          - HOST_DIR=/home/myUser
+    ```
+    </details>
+  </TabItem>
+</Tabs>
+
+#### Stack Configuration
+
+The configuration and behaviors below are applicable to all Stacks:
 
 <details>
 
 <summary>Environmental Variables</summary>
 
-| ENV                       | Required | Default                                | Description                                                                                                                                                      |
-| :------------------------ | :------- | -------------------------------------- | :--------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `SERVER_NAME`             | ☑️     |                                        | The name of the Komodo [Server](https://komo.do/docs/resources#server) where a Stack is located                                                                  |
-| `HOST_PARENT_PATH`        | ☑️     |                                        | The parent directory on the **host** where stack folders are located.                                                                                            |
-| `WRITE_ENV`               | -        | `false`                                | Write the contents of found .env files to Komodo **Environment**. Likely want this as `true`.                                                                    |
-| `FOLDER_GLOB`             | -        | `*`                                    | The [glob](https://github.com/isaacs/node-glob?tab=readme-ov-file#glob-primer) pattern to use for finding folders in the top-level folder given to Komodo Import |
-| `FOLDER_IGNORE_GLOB`      | -        |                                        | The [glob](https://github.com/isaacs/node-glob?tab=readme-ov-file#glob-primer) pattern to use to ignore folders in the top-level folder given to Komodo Import   |
-| `COMPOSE_FILE_GLOB`       | -        | `**/{compose,docker-compose}*.y?(a)ml` | The [glob](https://github.com/isaacs/node-glob?tab=readme-ov-file#glob-primer) pattern to use for finding files for **Files Paths** in Stack config              |
-| `ENV_FILE_GLOB`           | -        | `**/.env`                              | The [glob](https://github.com/isaacs/node-glob?tab=readme-ov-file#glob-primer) pattern to use for finding files for **Additional Env Files** in Stack config     |
-| `KOMODO_ENV_NAME`         | -        | `.komodoenv`                           | If existing .env files are found, and `WRITE_ENV=false`, then this name will be used for the .env that Komodo writes using its own Environment section           |
-| `IMAGE_REGISTRY_PROVIDER` | -        |                                        | Name of Image Registry to use                                                                                                                                    |
-| `IMAGE_REGISTRY_ACCOUNT`  | -        |                                        | Image Registry account to use                                                                                                                                    |
-| `POLL_FOR_UPDATE`         | -        |                                        | Poll for newer images?                                                                                                                                           |
-| `AUTO_UPDATE`             | -        |                                        | Auto Update stack?                                                                                                                                               |
+| ENV                       | Required | Default                                | Description                                                                                                                                                  |
+| :------------------------ | :------- | -------------------------------------- | :----------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `SERVER_NAME`             | ☑️     |                                        | The name of the Komodo [Server](https://komo.do/docs/resources#server) where a Stack is located                                                              |
+| `STACKS_FROM`             | ☑️     | `dir`                                  | What [**Stack Sources**](#stack-source) to generate Stacks from? `dir` or `compose`                                                                                                     |
+| `HOST_DIR`                | ☑️     |                                        | The parent directory on the **host** that mounted into the Komodo Import container                                                                           |
+| `WRITE_ENV`               | -        | `true`                                 | Write the contents of found .env files to Komodo **Environment**. Likely want this as `true`.                                                                |
+| `COMPOSE_FILE_GLOB`       | -        | `**/{compose,docker-compose}*.y?(a)ml` | The [glob](https://github.com/isaacs/node-glob?tab=readme-ov-file#glob-primer) pattern to use for finding files for **Files Paths** in Stack config          |
+| `ENV_FILE_GLOB`           | -        | `**/.env`                              | The [glob](https://github.com/isaacs/node-glob?tab=readme-ov-file#glob-primer) pattern to use for finding files for **Additional Env Files** in Stack config |
+| `KOMODO_ENV_NAME`         | -        | `.komodoenv`                           | If existing .env files are found, and `WRITE_ENV=false`, then this name will be used for the .env that Komodo writes using its own Environment section       |
+| `IMAGE_REGISTRY_PROVIDER` | -        |                                        | Name of Image Registry to use                                                                                                                                |
+| `IMAGE_REGISTRY_ACCOUNT`  | -        |                                        | Image Registry account to use                                                                                                                                |
+| `POLL_FOR_UPDATE`         | -        |                                        | Poll for newer images?                                                                                                                                       |
+| `AUTO_UPDATE`             | -        |                                        | Auto Update stack?                                                                                                                                           |
 
 </details>
 
-#### Files On Server
+<details markdown="1">
 
-Use existing, non git-based [Docker Compose projects](https://docs.docker.com/compose/how-tos/project-name/) (`compose.yaml`) as **Files On Server** mode Komodo Stacks.
+<summary>Compose File Detection</summary>
 
-KI will generate multiple Stacks from all folders within the given folder. This is similar to how [dockge](https://github.com/louislam/dockge) works.
+* Default pattern
+  * Looks for `compose.y(a)ml` and `docker-compose.y(a)ml` 
+  * Files may have interim names like `compose.dev.yaml`
+  * Can be overridden with `COMPOSE_FILE_GLOB` env for non-compose project stack sources
+* Will prioritize `compose.yaml` over `docker-compose.yaml`
+* Will choose the file with the shortest path EX
+  * Prioritizes `./compose.yaml` over `./aFolder/compose.yaml`
 
-<details>
+Komodo Import will **log** which files it detects and indicate which ones it will use for each project.
 
-<summary>Example</summary>
+:::note
 
-If your folder structure looks like this
+When using [Compose Projects Stack Source](./?stacksFrom=compose#stack-sources) compose files are automatically parsed from the running projects.
 
-```
-.
-└── /home/myUser/homelab/
-    ├── immich/
-    │   └── compose.yaml
-    ├── plex/
-    │   └── docker-compose.yaml
-    └── uptime-kuma/
-        └── compose.yaml
-```
-
-and you use `/home/myUser/homelab/` with KI then it will output stacks for
-
-* **immich** with Run Directory `/home/myUser/homelab/immich`
-* **plex** with Run Directory `/home/myUser/homelab/plex`
-* **uptime-kuma** with Run Directory `/home/myUser/homelab/uptime-kuma`
+:::
 
 </details>
 
-###### Project Files Detection {#project-file-detection}
-
-Komodo Import makes some reasonable assumptions about which `compose.yaml` and `.env` files you want to use within each project's folder. These can be overriden using the `*_GLOB` environmental varibales from the [Configuration](#fos-config) below.
-
 <details>
 
-<summary>File Detection and Behavior Details</summary>
+<summary>`.env` File Detection</summary>
 
-* Compose Files
-  * Default pattern
-    * Looks for `compose.y(a)ml` and `docker-compose.y(a)ml` 
-    * Files may have interim names like `compose.dev.yaml`
-    * Can be overridden with `COMPOSE_FILE_GLOB` env
-  * Will prioritize `compose.yaml` over `docker-compose.yaml`
-  * Will choose the file with the shortest path EX
-    * Prioritizes `./compose.yaml` over `./aFolder/compose.yaml`
-* .env Files
-  * Default pattern 
-    * Adds all `.env` files found at top-level or sub-folders
-    * Can be overridden with `ENV_FILE_GLOB` env
-  * If a `.env` file is found then configures Komodo to write it's own Environment section to `.komodoenv` instead of `.env`
-    * Komodo env name can be overridden with `KOMODO_ENV_NAME`
+* Default pattern 
+  * Adds all `.env` files found at top-level or sub-folders
+  * Can be overridden with `ENV_FILE_GLOB` env
+* If a `.env` file is found and `WRITE_ENV=false` then a Stack is configured to write it's own Environment section to `.komodoenv` instead of `.env`
+  * Komodo env name can be overridden with `KOMODO_ENV_NAME`
 
-Komodo Import will **log** which files it detects and indicate which ones it will use for each project. These can be manually modified in the generated TOML, [API Sync Resource](#api-sync), or after creating the Stack in Komodo.
+Komodo Import will **log** which files it detects and indicate which ones it will use for each project.
 
 </details>
 
-##### Configuration {#fos-config}
+
+There is additional configuration available depending on the [Stack Source](#stack-sources):
+
+<Tabs groupId="stacksFrom" queryString>
+  <TabItem value="dir" label="Directory">
+
+  * The `_GLOB` patterns are for matching folder names within the parent folder, not full directory paths
+    * The default pattern matches all folder names except those starting with a `.`
+
+| ENV                  | Required | Default | Description                                                                                                                                                      |
+| :------------------- | :------- | ------- | :--------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `FOLDER_GLOB`        | -        | `*`     | The [glob](https://github.com/isaacs/node-glob?tab=readme-ov-file#glob-primer) pattern to use for finding folders in the top-level folder given to Komodo Import |
+| `FOLDER_IGNORE_GLOB` | -        |         | The [glob](https://github.com/isaacs/node-glob?tab=readme-ov-file#glob-primer) pattern to use to ignore folders in the top-level folder given to Komodo Import   |
+
+    </TabItem>
+  <TabItem value="compose" label="Compose Projects">
+
+  * The `_GLOB` patterns are for matching **full directory paths**, not just a single folder name
+    * The default pattern matches all directories except those that have any folder starting with a `.`
+  * Komodo Import will **always** ignore projects created by Komodo itself (projects found in `/etc/komodo` or `/home/USER/komodo`)
+
+| ENV                        | Required | Default | Description                                                                                                                                           |
+| :------------------------- | :------- | ------- | :---------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `COMPOSE_FILE_GLOB`        | -        | `**/**` | The [glob](https://github.com/isaacs/node-glob?tab=readme-ov-file#glob-primer) pattern to use for matching a project's **full directory** on the host |
+| `COMPOSE_FILE_IGNORE_GLOB` | -        |         | The [glob](https://github.com/isaacs/node-glob?tab=readme-ov-file#glob-primer) pattern to use to ignore a project's **full directory** on the host    |
+
+  </TabItem>
+</Tabs>
+
+#### Git Based Stacks
+
+If a parsed folder (or parent of it) contains a `.git` folder and it has a valid tracked branch + remote, then it will generate a **Git Repo Stack**.
 
 <details>
 
-<summary>Environmental Variables</summary>
-
-Use the [**Common Stack Configuration environmental variables**](#common-stack-configuration)
-
-</details>
-
-For [docker](../../installation#docker) usage the folder with your projects should be mounted to `/filesOnServer` in the container.
-
-#### Git Repo
-
-Use existing, **git repository** folders containing [Docker Compose projects](https://docs.docker.com/compose/how-tos/project-name/) (`compose.yaml`) as **Git Repo** mode Komodo Stacks.
-
-KI will generate multiple Stacks from all folders within the given folder. Each folder detected as a git repository will have all required fields in a Git Repo Komodo Stack configured based on information from the local repository.
-
-<details>
-
-<summary>How Repository Parsing Works</summary>
+<summary>How Git Repository Parsing Works</summary>
 
 * A folder is only built as a Git Repo stack if...
-  * It contains a valid `.git` folder
+  * It contains a valid `.git` folder or a parent folder contains a `.git` folder
   * The git repo has a valid remote
   * The current checked out local branch is tracking a remote branch
-  * If any of the above are not true then the folder is instead parsed as a [Files On Server](#files-on-server) Stack
-* Additionally, if [**Komodo API is configured**](#komodo-api) then... 
-  * If Komodo has a [Repo](https://komo.do/docs/resources#repo) Resource that matches the remote, then the Git Repo Stack uses a Linked Repo
-  * If Komodo has a Git Provider matching the remote URL domain then that is used, along with the Git Provider user (private git is automatically detected)
+  * If any of the above are not true then the folder is instead parsed as a Files On Server Stack
 
 </details>
 
@@ -182,10 +318,6 @@ Your folder structure looks like this
     └── compose.yaml
 ```
 
-You run Komodo Import with the `homelab` directory:
-
-`docker run ... -e "HOST_PARENT_PATH=/home/myUser/homelab" -v /home/myUser/homelab:/filesOnServer foxxmd/komodo-import`
-
 * **immich** is created as a Git Repo Stack with
   * Git Provider: `git.mydomain.com`
   * Repo: `myUser/immich`
@@ -196,85 +328,69 @@ You run Komodo Import with the `homelab` directory:
   * Run Directory: `/home/myUser/homelab/uptime-kuma`
 </details>
 
+Additionally, if [**Komodo API is configured**](#komodo-api) then...
+
+* If Komodo has a [Repo](https://komo.do/docs/resources#repo) Resource that matches the remote, then the Git Repo Stack uses a Linked Repo
+* If Komodo has a Git Provider matching the remote URL domain then that is used, along with the Git Provider user (private git is automatically detected)
+
 ###### Monorepos
 
-Komodo Import can also handle **monorepos.** Mount the top-level repository folder to the usual `/filesOnServer` location and it will automatically treat sub-folders as Git Repo Stacks using the top-level repository.
+Komodo Import also handles **monorepos** IE one git repository with many folders containing projects. The only requirement to ensure this works is that the git repo "root" directory must be [mounted into Komodo Import.](#host-directory)
 
-<details>
+<Tabs groupId="stacksFrom" queryString>
+  <TabItem value="dir" label="Directory">
 
-<summary>Example</summary>
+    For [**Directory** Stack Source](./?stacksFrom=dir#stack-sources) use the root git repository directory as the [host directory](#host-directory).
 
-You have a repository at `https://git.mydomain.com/myUser/homelab` and each folder in the repo is a different stack.
+    <details>
 
-Your folder structure (on the host machine) looks like this:
+    <summary>Example</summary>
 
-```
-/home/myUser/homelab
-├── .git
-├── immich
-│   └── compose.yaml
-├── plex
-│   └── docker-compose.yaml
-└── uptime-kuma
-    └── compose.yaml
-```
+    ```
+    /home/myUser/homelab
+    ├── .git
+    ├── immich
+    │   └── compose.yaml
+    ├── plex
+    │   └── docker-compose.yaml
+    └── uptime-kuma
+        └── compose.yaml
+    ```
 
-You run Komodo Import with the `homelab` directory:
+    Use `/home/myUser/homelab` as the [host directory](#host-directory) because it contains `.git` folder.
 
-`docker run ... -v /home/myUser/homelab:/filesOnServer foxxmd/komodo-import`
+    </details>
 
-* **immich** is created as a Git Repo Stack with
-  * Git Provider: `git.mydomain.com`
-  * Repo: `myUser/homelab`
-  * Run Directory: `immich`
-* **plex** is created as a Git Repo Stack with
-  * Git Provider: `git.mydomain.com`
-  * Repo: `myUser/homelab`
-  * Run Directory: `plex`
-* **uptime-kuma** is created as a Files On Server Stack
-  * Git Provider: `git.mydomain.com`
-  * Repo: `myUser/homelab`
-  * Run Directory: `uptime-kuma`
+    If the directory containing your projects is not the root directory then use the ENV `SCAN_DIR` to set the path to use for projects _relative_ to the [host directory](#host-directory):
 
-</details>
+    <details>
 
-<details>
+      <summary>Example</summary>
 
-<summary>Nested Monorepo</summary>
+      ```
+      /home/myUser/homelab
+      ├── .git
+      ├── myStacks   <---- parent folder containing projects
+      │   ├── immich
+      │   │   └── compose.yaml
+      │   ├── plex
+      │   │   └── docker-compose.yaml
+      │   └── uptime-kuma
+      │       └── compose.yaml
+      └── somethingElse
+      ```
 
-If your stack folders are not the immediate sub-folders in your repository then specify the _relative directory from git root_ as `GIT_STACKS_DIR` to specify what parent folder to use:
+      * Use `/home/myUser/homelab` as the [host directory](#host-directory) because it contains `.git` folder
+      * Use `SCAN_DIR=myStacks` -- the folder Komodo Import will parse projects from, _relative_ to the host directory `/home/myUser/homelab`
+      </details>
 
-```
-/home/myUser/homelab
-├── .git
-├── myStacks
-│   ├── immich
-│   │   └── compose.yaml
-│   ├── plex
-│   │   └── docker-compose.yaml
-│   └── uptime-kuma
-│       └── compose.yaml
-└── somethingElse
-```
+    </TabItem>
+  <TabItem value="compose" label="Compose Projects">
 
-Use `GIT_STACKS_DIR=myStacks` with the above example.
+  Komodo Import will automatically determine if a project is in a monorepo by scanning all parent directories for `.git` folder. Just make sure the mounted [host directory](#host-directory) contains the monorepo folder at some level.
 
-</details>
-
-#### Configuration
-
-
-<details>
-
-<summary>Environmental Variables</summary>
-
-Combine with [**Common Stack Configuration environmental variables**](#common-stack-configuration)
-
-| ENV              | Required | Default | Description                                                                   |
-| :--------------- | :------- | ------- | :---------------------------------------------------------------------------- |
-| `GIT_STACKS_DIR` | -        |         | Set sub-folder to use for stacks when generating from a [monorepo](#monorepo) |
-
-</details>
+  </TabItem>
+</Tabs>
 
 ## Outputs
 
@@ -336,32 +452,6 @@ Then, add these environmental variables to Komodo Import:
 | `SYNC_NAME`       | -        | komodo-import | Name of Sync to create/modify                                            |
 
 </details>
-
-### File
-
-Komodo Import will attempt to write the generated output to a `.toml` file if the ENV `OUTPUT_DIR` is present. This should be the *directory* (not file) that the generated file should be written to.
-
-Bind mount a folder into the container and set `OUTPUT_DIR` like in the example below:
-
-<details>
-
-<summary>File Output Example</summary>
-
-```yaml
-services:
-  komodo-import:
-  # ...
-    environment:
-      # ...
-      - OUTPUT_DIR=/output
-    volumes:
-      # ...
-      - /my/host/folder:/output
-```
-
-</details>
-
-Use this with [manually creating Sync Resources](../resourceSync#create-sync-resource)
 
 ## Komodo API
 

@@ -7,6 +7,8 @@ import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
 import CodeBlock from '@theme/CodeBlock';
 import ComposeStack from '!!raw-loader!../../../compose.yaml';
+import ConsoleOutput from '../../src/components/QuickStartSnippets/consoleOutput.mdx'
+import TreeDirectory from '../../src/components/snippets/_directoryTree.mdx'
 
 ## Docker
 
@@ -45,7 +47,7 @@ Or use the example `compose.yml`, found in the repo, after modifying it to fit y
 
 :::tip
 
-See the [**Quick Start Guide**](../quickstart.mdx) for another guided docker-compose example
+Use the [**Quick Start Guide**](../quickstart.mdx) for an interactive setup!
 
 :::
 
@@ -54,165 +56,28 @@ The example scenario:
 * You have [Komodo](https://komo.do/) already setup
 * You have installed [Periphery](https://komo.do/docs/connect-servers) on a machine
   * The Komodo Server name for this machine is `my-cool-server`
-  * The machine is currently using dockge and has all of its compose projects located at `/home/myUser/homelab` like...
-    * `/home/myUser/homelab/immich`
-    * `/home/myUser/homelab/plex`
-    * etc...
+  * The machine is currently using dockge and its projects directory looks like this:
 
-<Tabs groupId="runType" queryString>
-    <TabItem value="docker" label="Docker">
-    ```bash
-    docker run --name komodo-import -e "SERVER_NAME=my-cool-server" -e "HOST_PARENT_PATH=/home/myUser/homelab" -v /home/myUser/homelab:/filesOnServer foxxmd/komodo-import
-    ```
-    </TabItem>
-    <TabItem value="docker-compose" label="Docker Compose">
-        See [`docker-compose.yml`](#docker) sample above for more options and annotations.
+<TreeDirectory/>
 
-        ```yaml title="docker-compose.yml"
-        services:
-          komodo-import:
-            image: foxxmd/komodo-import:latest
-              volumes:
-                ## ParentDirectory:FILES_ON_SERVER_DIR
-                - /home/myUser/homelab:/filesOnServer:ro
-            environment:
-              - TZ=America/New_York
-              ## Komodo Server name to use for generated Stacks
-              - SERVER_NAME=my-cool-server
-              ## ParentDirectory on the host use as Stack Run Directory prefix
-              - HOST_PARENT_PATH=/home/myUser/homelab
-            restart: no
-        ```
-        ```shell
-        docker compose up --no-log-prefix
-        ```
-    </TabItem>
-</Tabs>
-
-<details>
-
-<summary>Output</summary>
-
-```shell
-[2025-08-11 14:06:19.080 -0400] INFO   : [Init] Debug Mode: NO
-[2025-08-11 14:06:19.094 -0400] INFO   : [App] Version: 0.1.0
-[2025-08-11 14:06:19.095 -0400] INFO   : [App] Files On Server Dir ENV: /filesOnServer -> Resolved: /filesOnServer
-[2025-08-11 14:06:19.096 -0400] INFO   : [App] [Files On Server] Processing Stacks for 6 folders:
-/filesOnServer/compose.yaml
-/filesOnServer/immich
-/filesOnServer/jellyfin
-/filesOnServer/octoprint
-/filesOnServer/plex
-/filesOnServer/uptime-kuma
-[2025-08-11 14:06:19.096 -0400] INFO   : [App] [Files On Server] Compose File Glob: **/{compose,docker-compose}*.y?(a)ml
-[2025-08-11 14:06:19.097 -0400] INFO   : [App] [Files On Server] Env Glob: **/.env
-[2025-08-11 14:06:19.097 -0400] INFO   : [App] [Files On Server] [compose] Found Stack 'compose' at dir /filesOnServer/compose.yaml
-[2025-08-11 14:06:19.103 -0400] WARN   : [App] [Files On Server] [compose] Did not find any files patterns matching compose glob
-[2025-08-11 14:06:19.103 -0400] INFO   : [App] [Files On Server] [compose] Stack config complete
-[2025-08-11 14:06:19.104 -0400] INFO   : [App] [Files On Server] [immich] Found Stack 'immich' at dir /filesOnServer/immich
-[2025-08-11 14:06:19.107 -0400] INFO   : [App] [Files On Server] [immich] Found 1 files matching compose glob:
-docker/docker-compose.yaml
-[2025-08-11 14:06:19.107 -0400] INFO   : [App] [Files On Server] [immich] Using file(s): docker/docker-compose.yaml
-[2025-08-11 14:06:19.108 -0400] INFO   : [App] [Files On Server] [immich] Stack config complete
-[2025-08-11 14:06:19.108 -0400] INFO   : [App] [Files On Server] [jellyfin] Found Stack 'jellyfin' at dir /filesOnServer/jellyfin
-[2025-08-11 14:06:19.109 -0400] INFO   : [App] [Files On Server] [jellyfin] Found 3 files matching compose glob:
-compose.yaml
-docker-compose.yaml
-docker/docker-compose.yaml
-[2025-08-11 14:06:19.110 -0400] INFO   : [App] [Files On Server] [jellyfin] Using file: compose.yaml but not writing to file_paths since this is the Komodo default
-[2025-08-11 14:06:19.111 -0400] INFO   : [App] [Files On Server] [jellyfin] Found 1 env files matching pattern **/.env:
-.env
-[2025-08-11 14:06:19.111 -0400] INFO   : [App] [Files On Server] [jellyfin] Using .komodoEnv for Komodo-written env file
-[2025-08-11 14:06:19.111 -0400] INFO   : [App] [Files On Server] [jellyfin] Stack config complete
-[2025-08-11 14:06:19.111 -0400] INFO   : [App] [Files On Server] [octoprint] Found Stack 'octoprint' at dir /filesOnServer/octoprint
-[2025-08-11 14:06:19.112 -0400] WARN   : [App] [Files On Server] [octoprint] Did not find any files patterns matching compose glob
-[2025-08-11 14:06:19.112 -0400] INFO   : [App] [Files On Server] [octoprint] Stack config complete
-[2025-08-11 14:06:19.113 -0400] INFO   : [App] [Files On Server] [plex] Found Stack 'plex' at dir /filesOnServer/plex
-[2025-08-11 14:06:19.114 -0400] INFO   : [App] [Files On Server] [plex] Found 1 files matching compose glob:
-compose.yaml
-[2025-08-11 14:06:19.114 -0400] INFO   : [App] [Files On Server] [plex] Using file: compose.yaml but not writing to file_paths since this is the Komodo default
-[2025-08-11 14:06:19.115 -0400] INFO   : [App] [Files On Server] [plex] Stack config complete
-[2025-08-11 14:06:19.115 -0400] INFO   : [App] [Files On Server] [uptime-kuma] Found Stack 'uptime-kuma' at dir /filesOnServer/uptime-kuma
-[2025-08-11 14:06:19.116 -0400] INFO   : [App] [Files On Server] [uptime-kuma] Found 1 files matching compose glob:
-compose.yaml
-[2025-08-11 14:06:19.116 -0400] INFO   : [App] [Files On Server] [uptime-kuma] Using file: compose.yaml but not writing to file_paths since this is the Komodo default
-[2025-08-11 14:06:19.117 -0400] INFO   : [App] [Files On Server] [uptime-kuma] Found 1 env files matching pattern **/.env:
-.env
-[2025-08-11 14:06:19.117 -0400] INFO   : [App] [Files On Server] [uptime-kuma] Using .komodoEnv for Komodo-written env file
-[2025-08-11 14:06:19.117 -0400] INFO   : [App] [Files On Server] [uptime-kuma] Stack config complete
-[2025-08-11 14:06:19.118 -0400] INFO   : [App] [Files On Server] Built Stack configs for 6 folders
-[2025-08-11 14:06:19.119 -0400] INFO   : [App] Copy the text between the scissors to use as the *Resource File* contents within your Resource Sync
-
-✂️  ✂️  ✂️  ✂️  ✂️  ✂️  ✂️  ✂️  ✂️  ✂️  ✂️  ✂️
-[[stack]]
-name = "compose"
-
-[stack.config]
-server = "my-cool-server"
-run_directory = "/home/myUser/homelab/compose"
-files_on_host = true
-auto_update = false
-poll_for_updates = false
-
-[[stack]]
-name = "immich"
-
-[stack.config]
-server = "my-cool-server"
-run_directory = "/home/myUser/homelab/immich"
-files_on_host = true
-auto_update = false
-poll_for_updates = false
-file_paths = [ "docker/docker-compose.yaml" ]
-
-[[stack]]
-name = "jellyfin"
-
-[stack.config]
-server = "my-cool-server"
-run_directory = "/home/myUser/homelab/jellyfin"
-files_on_host = true
-auto_update = false
-poll_for_updates = false
-env_file_path = ".komodoEnv"
-additional_env_files = [ ".env" ]
-
-[[stack]]
-name = "octoprint"
-
-[stack.config]
-server = "my-cool-server"
-run_directory = "/home/myUser/homelab/octoprint"
-files_on_host = true
-auto_update = false
-poll_for_updates = false
-
-[[stack]]
-name = "plex"
-
-[stack.config]
-server = "my-cool-server"
-run_directory = "/home/myUser/homelab/plex"
-files_on_host = true
-auto_update = false
-poll_for_updates = false
-
-[[stack]]
-name = "uptime-kuma"
-
-[stack.config]
-server = "my-cool-server"
-run_directory = "/home/myUser/homelab/uptime-kuma"
-files_on_host = true
-auto_update = false
-poll_for_updates = false
-env_file_path = ".komodoEnv"
-additional_env_files = [ ".env" ]
-✂️  ✂️  ✂️  ✂️  ✂️  ✂️  ✂️  ✂️  ✂️  ✂️  ✂️  ✂️
-[2025-08-11 14:06:19.119 -0400] INFO   : [App] Done!
+```yaml title="docker-compose.yml"
+services:
+  komodo-import:
+    image: foxxmd/komodo-import:latest
+      volumes:
+        - /home/myUser/homelab:/filesOnServer:ro
+    environment:
+      - TZ=America/New_York
+      ## Komodo Server name to use for generated Stacks
+      - SERVER_NAME=my-cool-server
+      ## ParentDirectory on the host use as Stack Run Directory prefix
+      - HOST_DIR=/home/myUser/homelab
+      ## generate stacks from mounted directory subfolders
+      - STACKS_FROM=dir
+    restart: no
 ```
 
-</details>
+<ConsoleOutput/>
 
 ## Local Installation
 
@@ -232,5 +97,5 @@ npm run start
 #### Usage Examples
 
 ```shell
-SERVER_NAME=my-server HOST_PARENT_PATH=/my/parent/folder node src/index.js
+SERVER_NAME=my-cool-server STACKS_FROM=dir MOUNT_DIR=/my/parent/folder node src/index.js
 ```
