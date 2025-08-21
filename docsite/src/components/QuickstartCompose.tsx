@@ -231,18 +231,18 @@ const QuickstartCompose = (props: AIOProps) => {
 
         <h3>4. Where should generated Stacks be created?</h3>
 
-        <p>Choose one or more <a href="../usage/overview/#outputs-1">Outputs</a>:</p>
+        <p>Choose one or more <a href="../usage/overview#outputs-1">Outputs</a>:</p>
 
         <p><Button className="margin-right--md" label="Console" link="#" variant="primary" disabled/> <Button label="Komodo" link="#" variant="primary" 
         outline={!composeState.api}
         onClick={komodoApiCallback}/></p>
 
-        <p>Generated Stacks are <strong>always</strong> output to docker logs as a <a href="../usage/resourceSync/#create-sync-resource">Sync Resource</a>.</p>
+        <p>Generated Stacks are <strong>always</strong> output to docker logs as a <a href="../usage/resourceSync#create-sync-resource">Sync Resource</a>.</p>
 
         <MDXContent><ConsoleOutput/></MDXContent>
 
         <div style={{display: composeState.api ? 'inherit' : 'none'}}>
-            <p>Komodo Import can, additionally, create a <a href="../usage/resourceSync/#create-sync-resource">Sync Resource</a> with the generated Stacks in Komodo for you. This method <strong>only</strong> creates the Resource, it does not execute or change your existing Stacks.</p>
+            <p>Komodo Import can, additionally, create a <a href="../usage/resourceSync#create-sync-resource">Sync Resource</a> with the generated Stacks in Komodo for you. This method <strong>only</strong> creates the Resource, it does not execute or change your existing Stacks.</p>
 
             <p>Create an <a href="../usage/overview#api-sync">API Key and Secret</a>, then specify them below.</p>
             <p>

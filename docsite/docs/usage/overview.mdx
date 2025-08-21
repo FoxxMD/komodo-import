@@ -201,7 +201,7 @@ The configuration and behaviors below are applicable to all Stacks:
 | ENV                       | Required | Default                                | Description                                                                                                                                                  |
 | :------------------------ | :------- | -------------------------------------- | :----------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `SERVER_NAME`             | ☑️     |                                        | The name of the Komodo [Server](https://komo.do/docs/resources#server) where a Stack is located                                                              |
-| `STACKS_FROM`             | ☑️     | `dir`                                  | What [**Stack Sources**](#stack-source) to generate Stacks from? `dir` or `compose`                                                                                                     |
+| `STACKS_FROM`             | ☑️     | `dir`                                  | What [**Stack Sources**](#stack-sources) to generate Stacks from? `dir` or `compose`                                                                                                     |
 | `HOST_DIR`                | ☑️     |                                        | The parent directory on the **host** that mounted into the Komodo Import container                                                                           |
 | `WRITE_ENV`               | -        | `true`                                 | Write the contents of found .env files to Komodo **Environment**. Likely want this as `true`.                                                                |
 | `COMPOSE_FILE_GLOB`       | -        | `**/{compose,docker-compose}*.y?(a)ml` | The [glob](https://github.com/isaacs/node-glob?tab=readme-ov-file#glob-primer) pattern to use for finding files for **Files Paths** in Stack config          |
@@ -279,7 +279,7 @@ There is additional configuration available depending on the [Stack Source](#sta
   </TabItem>
 </Tabs>
 
-#### Git Based Stacks
+#### Git Repo Stacks
 
 If a parsed folder (or parent of it) contains a `.git` folder and it has a valid tracked branch + remote, then it will generate a **Git Repo Stack**.
 
