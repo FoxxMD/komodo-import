@@ -266,7 +266,7 @@ const QuickstartCompose = (props: AIOProps) => {
         
         {/* <Checkbox id="autoUpdate" checked={composeState.autoUpdate} onChange={setOptByName('autoUpdate')}>Auto Update</Checkbox>
         <Checkbox id="pollUpdate" checked={composeState.pollUpdate} onChange={setOptByName('pollUpdate')}>Poll For Update?</Checkbox> */}
-        <CodeBlock title="compose.yaml" language="yaml">{userDoc.toString()}</CodeBlock>
+        <CodeBlock className="rr-block .rr-block" title="compose.yaml" language="yaml">{userDoc.toString()}</CodeBlock>
         </Fragment>;
 }
 
