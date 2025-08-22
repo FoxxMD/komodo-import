@@ -99,7 +99,7 @@ describe('#Utils', function () {
                 await mkdir(path.join(process.cwd(), 'test_1'));
                 await mkdir(path.join(process.cwd(), 'ignoreme', 'subfolder'), {recursive: true});
                 await writeFile(path.join(process.cwd(), 'ignoreme', 'subfolder', 'test.txt'), '');
-                const folders = await findFolders(process.cwd(), undefined, 'ignore*');
+                const folders = await findFolders(process.cwd(), undefined, {ignore: 'ignore*'});
                 expect(folders).to.deep.eq(['test_1']);
             }, { unsafeCleanup: true });
         });

@@ -17,7 +17,7 @@ import { exportToFile } from './exporters/exportToFile.js';
 import { exportToSync } from './exporters/exportToApiSync.js';
 import { getDefaultKomodoApi } from './common/utils/komodo.js';
 import { StackBuilder } from './builders/stack/stackBuilder.js';
-import { parseDirectoryConfig } from './common/utils/io.js';
+import { parseDirectoryConfig, pathHasDotFolder } from './common/utils/io.js';
 import { DirectoryConfig, DirectoryConfigValues } from './common/infrastructure/atomic.js';
 
 dayjs.extend(utc)
@@ -56,16 +56,6 @@ try {
 
     getDefaultKomodoApi(logger);
 
-    let dirData: [DirectoryConfigValues, DirectoryConfig];
-    try {
-        dirData = await parseDirectoryConfig();
-        logger.info(`Mount Dir : ${dirData[0].mountVal} -> Resolved: ${dirData[1].mount}`);
-        logger.info(`Host Dir  : ${dirData[0].hostVal} -> Resolved: ${dirData[1].host}`);
-        logger.info(`Scan Dir  : ${dirData[0].scanVal} -> Resolved: ${dirData[1].scan}`);
-    } catch (e) {
-        throw new Error('Could not parse required directories', {cause: e});
-    }
-
     const importOptions: CommonImportOptions = {
         server: process.env.SERVER_NAME,
         imageRegistryProvider: process.env.IMAGE_REGISTRY_PROVIDER,
@@ -74,10 +64,29 @@ try {
         pollForUpdate: isUndefinedOrEmptyString(process.env.POLL_FOR_UPDATE) ? undefined : parseBool(process.env.POLL_FOR_UPDATE),
         komodoEnvName: process.env.KOMODO_ENV_NAME,
         composeFileGlob: process.env.COMPOSE_FILE_GLOB,
+        allowGlobDot: isUndefinedOrEmptyString(process.env.GLOB_DOT) ? undefined : parseBool(process.env.GLOB_DOT),
         envFileGlob: process.env.ENV_FILE_GLOB,
         folderGlob: isUndefinedOrEmptyString(process.env.FOLDER_GLOB) ? undefined : process.env.FOLDER_GLOB.trim(),
         ignoreFolderGlob: isUndefinedOrEmptyString(process.env.FOLDER_IGNORE_GLOB) ? undefined : process.env.FOLDER_IGNORE_GLOB.trim(),
     };
+
+    let dirData: [DirectoryConfigValues, DirectoryConfig];
+    try {
+        dirData = await parseDirectoryConfig(undefined);
+        logger.info(`Mount Dir : ${dirData[0].mountVal} -> Resolved: ${dirData[1].mount}`);
+        logger.info(`Host Dir  : ${dirData[0].hostVal} -> Resolved: ${dirData[1].host}`);
+        logger.info(`Scan Dir  : ${dirData[0].scanVal} -> Resolved: ${dirData[1].scan}`);
+    } catch (e) {
+        throw new Error('Could not parse required directories', {cause: e});
+    }
+
+    if(pathHasDotFolder(dirData[1].host) && importOptions.allowGlobDot !== true) {
+        logger.warn(`It looks like your Host Dir has a dot folder in its path and the env GLOB_DOT is not true/set. Komodo Import may not be able to match your paths because of this. If results are not as expected try setting GLOB_DOT=true`);
+    }
+    if(pathHasDotFolder(dirData[1].scan) && dirData[1].host !== dirData[1].scan && importOptions.allowGlobDot !== true) {
+        logger.warn(`It looks like your Scan Dir has a dot folder in its path and the env GLOB_DOT is not true/set. Komodo Import may not be able to match your paths because of this. If results are not as expected try setting GLOB_DOT=true`);
+    }
+
 
     if (importOptions.server === undefined || importOptions.server.trim() === '') {
         logger.error('ENV SERVER_NAME must be set');

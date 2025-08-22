@@ -26,6 +26,8 @@ import ApiOutput from './QuickStartSnippets/apiOutput.mdx';
 const doc = parseDocument(ComposeExample);
 const proxyCollection = parseDocument(SocketProxyExample);
 
+const DOT_FOLDER_REGEX = new RegExp(/(?:^|[\/\\])\.\S/);
+
 interface ComposeStateData {
     autoUpdate?: boolean
     pollUpdate?: boolean
@@ -131,6 +133,12 @@ const QuickstartCompose = (props: AIOProps) => {
     const hostS = new Scalar(`HOST_PARENT_PATH=${hostPath}`);
     hostS.commentBefore = `# Same as mounted directory above`
     seq.add(hostS);
+
+    if(DOT_FOLDER_REGEX.test(hostPath)) {
+        const dotS = new Scalar(`GLOB_DOT=true`);
+        dotS.commentBefore = `# Forces glob to not ignore dot folders`
+        seq.add(dotS);    
+    }
 
     const stacksFromS = new Scalar(`STACKS_FROM=${composeState.stacksFrom}`);
     stacksFromS.commentBefore = '# Determines what sources to generate Stacks from'

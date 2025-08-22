@@ -1,9 +1,10 @@
 import { accessSync, constants, promises } from "fs";
 import pathUtil, { join, dirname } from "path";
-import { glob, GlobOptionsWithFileTypesUnset } from 'glob';
+import { glob, GlobOptionsWithFileTypesUnset, GlobOptionsWithFileTypesTrue } from 'glob';
 import clone from 'clone';
 import { DEFAULT_GLOB_FOLDER, DirectoryConfig, DirectoryConfigValues } from "../infrastructure/atomic.js";
 import { parseBool } from "./utils.js";
+import { testMaybeRegex } from "@foxxmd/regex-buddy-core";
 
 export async function writeFile(path: any, text: any) {
     try {
@@ -80,7 +81,7 @@ export const findFilesRecurive = async (filePattern: string, fromDir: string, op
     }
 }
 
-export const findPathRecuriveParently = async (fromDir: string, path: string) => {
+export const findPathRecuriveParently = async (fromDir: string, path: string, options: GlobOptionsWithFileTypesUnset = {}) => {
 
     let currDirectory = fromDir;
     let parentDirectory = fromDir;
@@ -93,6 +94,7 @@ export const findPathRecuriveParently = async (fromDir: string, path: string) =>
 
         const files = await glob(path, {
             cwd: parentDirectory,
+            ...options
         });
 
         if(files.length > 0) {
@@ -157,13 +159,13 @@ export const readDirectories = async (path: string, options: ReadDirectoryOption
     }
 }
 
-export const findFolders = async (fromDir: string, filePattern: string = DEFAULT_GLOB_FOLDER, ignore?: string): Promise<string[]> => {
+export const findFolders = async (fromDir: string, filePattern: string = DEFAULT_GLOB_FOLDER, options: Partial<GlobOptionsWithFileTypesTrue> = {}): Promise<string[]> => {
     try {
         const res = await glob(filePattern, {
             cwd: fromDir,
             nodir: false,
             withFileTypes: true,
-            ignore
+            ...options,
         });
         return res.filter(x => x.isDirectory()).map(x => x.name);
     } catch (e) {
@@ -174,6 +176,9 @@ export const findFolders = async (fromDir: string, filePattern: string = DEFAULT
 export const dirHasGitConfig = (paths: string[]): boolean => {
     return paths.some(x => x === '.git');
 }
+
+const DOT_FOLDER_REGEX = new RegExp(/(?:^|[\/\\])\.\S/);
+export const pathHasDotFolder = (pathVal: string): boolean => DOT_FOLDER_REGEX.test(pathVal)
 
 export const parseDirectoryConfig = async (dirConfig: DirectoryConfigValues = {}): Promise<[DirectoryConfigValues, DirectoryConfig]> => {
     const {

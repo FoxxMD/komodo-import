@@ -25,6 +25,7 @@ export const buildGitStack = async (path: string, options: BuildGitStackOptions)
         projectName,
         composeFiles = [],
         writeEnv = false,
+        allowGlobDot,
     } = options
 
     let gitStackConfig: _PartialStackConfig = {}
@@ -52,7 +53,7 @@ export const buildGitStack = async (path: string, options: BuildGitStackOptions)
     }
 
     if(gitData === undefined) {
-        const parentGitPath = await findPathRecuriveParently(path, '.git');
+        const parentGitPath = await findPathRecuriveParently(path, '.git', {dot: allowGlobDot});
         if (parentGitPath !== undefined) {
             const parentGitDir = dirname(parentGitPath)
             try {

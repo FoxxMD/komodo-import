@@ -11,4 +11,5 @@ export interface CommonImportOptions {
     ignoreFolderGlob?: string
     composeGlob?: string
     ignoreComposeGlob?: string
+    allowGlobDot?: boolean
 }

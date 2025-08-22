@@ -48,7 +48,8 @@ export class StackBuilder {
             ignoreFolderGlob,
             envFileGlob = DEFAULT_ENV_GLOB,
             composeGlob = DEFAULT_GLOB_COMPOSE,
-            ignoreComposeGlob
+            ignoreComposeGlob,
+            allowGlobDot = false
         } = this.stackConfigOptions;
 
         let folderPaths: string[] = [];
@@ -66,9 +67,9 @@ export class StackBuilder {
 
             await this.parseComposeProjects();
 
-            const includeGlob = new Minimatch(composeGlob);
-            const excludeGlob = ignoreComposeGlob === undefined ? undefined : new Minimatch(ignoreComposeGlob);
-            const komodoGlob = new Minimatch(KOMODO_GLOB_IGNORE_COMPOSE);
+            const includeGlob = new Minimatch(composeGlob, {dot: allowGlobDot});
+            const excludeGlob = ignoreComposeGlob === undefined ? undefined : new Minimatch(ignoreComposeGlob, {dot: allowGlobDot});
+            const komodoGlob = new Minimatch(KOMODO_GLOB_IGNORE_COMPOSE, {dot: allowGlobDot});
 
             for (const c of this.composeCandidateStacks) {
                 if (!c.workingDir.includes(this.dirData.host)) {
@@ -100,7 +101,7 @@ export class StackBuilder {
             this.logger.info(`Folder Ignore Glob: ${ignoreFolderGlob ?? 'N/A'}`);
 
             await this.parseComposeProjects();
-            const dirs = await findFolders(this.dirData.scan, folderGlob, ignoreFolderGlob)
+            const dirs = await findFolders(this.dirData.scan, folderGlob, {ignore: ignoreFolderGlob, dot: allowGlobDot})
             folderPaths = dirs.map(x => joinPath(this.dirData.scan, x));
             this.logger.verbose(`Got ${folderPaths.length} folders in ${this.dirData.scan}:\n${formatIntoColumns(dirs, 3)}`);
         }
