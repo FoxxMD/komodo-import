@@ -245,12 +245,8 @@ const QuickstartCompose = (props: AIOProps) => {
         outline={!composeState.api}
         onClick={komodoApiCallback}/></p>
 
-        <p>Generated Stacks are <strong>always</strong> output to docker logs as a <a href="../usage/resourceSync#create-sync-resource">Sync Resource</a>.</p>
-
-        <MDXContent><ConsoleOutput/></MDXContent>
-
         <div style={{display: composeState.api ? 'inherit' : 'none'}}>
-            <p>Komodo Import can, additionally, create a <a href="../usage/resourceSync#create-sync-resource">Sync Resource</a> with the generated Stacks in Komodo for you. This method <strong>only</strong> creates the Resource, it does not execute or change your existing Stacks.</p>
+            <p>Komodo Import can create a <a href="../usage/resourceSync#create-sync-resource">Sync Resource</a> with the generated Stacks in Komodo for you. This method <strong>only</strong> creates the Resource, it does not execute or change your existing Stacks.</p>
 
             <p>Create an <a href="../usage/overview#api-sync">API Key and Secret</a>, then specify them below.</p>
             <p>
@@ -267,6 +263,10 @@ const QuickstartCompose = (props: AIOProps) => {
             </p>
             <MDXContent><ApiOutput/></MDXContent>
         </div>
+
+        <p>Generated Stacks are <strong>always</strong> output to docker logs as a <a href="../usage/resourceSync#create-sync-resource">Sync Resource</a>.</p>
+
+        <MDXContent><ConsoleOutput/></MDXContent>
 
         <h3>5. Save your customized Compose file</h3>
 
