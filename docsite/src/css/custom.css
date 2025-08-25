@@ -28,3 +28,9 @@
   --ifm-color-primary-lightest: #4fddbf;
   --docusaurus-highlighted-code-line-bg: rgba(0, 0, 0, 0.3);
 }
+
+@media screen and (max-width: 996px) {
+  .button--lg {
+    --ifm-button-size-multiplier: 1.1;
+  }
+}
