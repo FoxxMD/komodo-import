@@ -217,6 +217,9 @@ if (process.env.RY_ANALYTICS !== undefined && process.env.RY_ANALYTICS !== '') {
   if (process.env.RY_ANALYTICS_REPLAY !== undefined && process.env.RY_ANALYTICS_REPLAY !== '') {
     script['data-session-replay'] = process.env.RY_ANALYTICS_REPLAY;
   }
+  if (process.env.RY_ANALYTICS_API !== undefined && process.env.RY_ANALYTICS_API !== '') {
+    script['data-api-key'] = process.env.RY_ANALYTICS_API;
+  }
   config.scripts.push(script)
 }
 
