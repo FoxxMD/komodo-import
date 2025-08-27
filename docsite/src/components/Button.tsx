@@ -39,7 +39,8 @@ export default function Button ({
     style = {}, 
     link, 
     label,
-    onClick = () => null
+    onClick = () => null,
+    ...rest
 }: ButtonProps) {
     // Map the size prop values to corresponding CSS classes.
     const sizeMap = {
@@ -76,6 +77,7 @@ export default function Button ({
                     e.preventDefault();
                     onClick()
                 }}
+                {...rest}
             >
                 {label}
             </button>

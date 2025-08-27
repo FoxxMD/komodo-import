@@ -99,6 +99,17 @@
                 "${workspaceFolder}/node_modules/**",
             ],
             "type": "node"
+        },
+        {
+            "name": "Start Docs",
+            "type": "node",
+            "request": "launch",
+            "cwd": "${workspaceRoot}/docsite",
+            "envFile": "${workspaceFolder}/.env",
+            "runtimeExecutable": "npm",
+            "runtimeArgs": [
+                "run-script", "start"
+            ],
         }
     ]
 }

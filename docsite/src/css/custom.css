@@ -34,3 +34,45 @@
     --ifm-button-size-multiplier: 1.1;
   }
 }
+
+.docsRating {
+  text-align:center;
+  color:#057594;
+  background-color:#64d7ff4d;
+  border-radius:var(--ifm-global-radius);
+  min-height:66px;
+  margin-top:42px;
+  padding:16px 30px 16px 40px;
+  font-weight:500;
+  line-height:32px;
+  display:inline-block
+}
+.docsRating svg {
+  width:1.5em;
+  height:1.5em;
+  margin:0 0 0 6px
+}
+.docsRating svg:hover,
+.docsRating svg:focus {
+  cursor:pointer;
+  fill:var(--ifm-color-primary)
+}
+.docsRating .i_thumbsup {
+  fill: var(--ifm-link-color);
+  margin-left:12px;
+  transform:translateY(.25em)
+}
+.docsRating .i_thumbsdown {
+  fill:#e9430f;
+  transform:scale(-1)translateY(-.25em)
+}
+html[data-theme=dark] .docsRating {
+  color:#cee9f3
+}
+@media only screen and (width<=996px) {
+  .docsRating {
+    border-radius:var(--ifm-global-radius);
+    width:100%;
+    margin:36px 0 0!important
+  }
+}
