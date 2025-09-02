@@ -95,6 +95,7 @@ export const exportToSync = async (toml: string, parentLogger: Logger): Promise<
                     hint = 'Sync already exists! Use a different name.'
                     break;
             }
+            logger.error(e);
             throw new Error(`Komodo API error occurred while trying to export to Resource Sync${hint !== undefined ? `. Hint: ${hint}` : ''}`, { cause: e });
         }
     } else if (isDebugMode()) {
