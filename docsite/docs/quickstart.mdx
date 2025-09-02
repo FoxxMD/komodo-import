@@ -5,13 +5,15 @@ sidebar_position: 1
 
 import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
-import QuickstartCompose from "../src/components/QuickstartCompose";
+import QuickstartCompose from "../src/components/QuickStart/Questionnaire";
+import BrowserOnly from '@docusaurus/BrowserOnly';
+import {ServerName} from "../src/components/LocalStorageComponents";
 
 ## Prerequisites
 
 * You have Komodo already setup
 * You have installed [Periphery](https://komo.do/docs/connect-servers) on a machine
-  * The Komodo [Server](https://komo.do/docs/resources#server) name is `my-cool-server`
+  * The Komodo [Server](https://komo.do/docs/resources#server) name is <ServerName readOnly stylePreset='inline'/>
 
 ## Create Your Scenario
 

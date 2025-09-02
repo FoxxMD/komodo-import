@@ -1,0 +1,67 @@
+import React, { Fragment, useState, useEffect, FC } from "react"
+import { useDebounce } from "use-debounce";
+import { useTypedLocalStorage } from "../useLocalStorage";
+import CodeInline from '@theme/CodeInline';
+import BrowserOnly from '@docusaurus/BrowserOnly';
+
+export interface LocalStorateTextProps {
+    readOnly?: boolean
+    storageKey: string
+    initialValue?: string
+    placeholder?: string
+    stylePreset?: 'inline' | 'bold'
+}
+
+export type FixedStorageProps = Omit<LocalStorateTextProps, 'storageKey'>;
+
+const InternalLocalStorageText: FC<LocalStorateTextProps> = (props) => {
+
+    const {
+        readOnly = false,
+        stylePreset,
+        placeholder,
+        storageKey,
+        initialValue = ""
+    } = props
+
+        const [storageVal, setStorageVal] = useTypedLocalStorage(storageKey, initialValue);
+        const [inputValue, setInputValue] = React.useState(storageVal);
+        const [value, setValue] = useDebounce(inputValue, 500);
+        useEffect(() => {
+            setStorageVal(value);
+        }, [value, setStorageVal]);
+    
+        const handleInputChange = (event) => {
+            setInputValue(event.target.value);
+        }
+
+        useEffect(() => {
+            setValue(storageVal);
+            setInputValue(storageVal);
+        }, [storageVal, setValue, setInputValue])
+
+        if(readOnly) {
+            let roVal: string;
+            if(storageVal !== undefined && storageVal !== null && storageVal.trim() !== '') {
+                roVal = storageVal;
+            } else if(initialValue !== '') {
+                roVal = initialValue;
+            } else if(placeholder !== undefined) {
+                roVal = placeholder;
+            }
+            switch(stylePreset) {
+                case 'inline':
+                    return <CodeInline>{roVal}</CodeInline>;
+                case 'bold':
+                    return <strong>{roVal}</strong>;
+                default:
+                    return <Fragment>{roVal}</Fragment>;
+            }
+        }
+
+        return <input type="text" placeholder={placeholder} onChange={handleInputChange} value={inputValue}/>
+}
+
+export const LocalStorageText:  FC<LocalStorateTextProps> = (props) => {
+    return <BrowserOnly>{() => <InternalLocalStorageText {...props}/>}</BrowserOnly>
+}
