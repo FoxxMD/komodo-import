@@ -95,7 +95,7 @@ export class StackBuilder {
                     Komodo Import Mount Path => ${convertedPath}`);
                 folderPaths.push(convertedPath);
             }
-            this.logger.verbose(`Got ${folderPaths.length} valid compose project directories`);
+            this.logger.info(`Got ${folderPaths.length} valid compose project directories`);
         } else {
             this.logger.info(`Folder Glob: ${folderGlob}`);
             this.logger.info(`Folder Ignore Glob: ${ignoreFolderGlob ?? 'N/A'}`);
@@ -103,7 +103,7 @@ export class StackBuilder {
             await this.parseComposeProjects();
             const dirs = await findFolders(this.dirData.scan, folderGlob, {ignore: ignoreFolderGlob, dot: allowGlobDot})
             folderPaths = dirs.map(x => joinPath(this.dirData.scan, x));
-            this.logger.verbose(`Got ${folderPaths.length} folders in ${this.dirData.scan}:\n${formatIntoColumns(dirs, 3)}`);
+            this.logger.info(`Got ${folderPaths.length} folders in ${this.dirData.scan}:\n${formatIntoColumns(dirs, 3)}`);
         }
 
         let stacks: TomlStack[] = [];

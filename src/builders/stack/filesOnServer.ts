@@ -31,7 +31,7 @@ export const buildFileStack = async (path: string, options: BuildFileStackOption
     const folderName = `${pathInfo.name}${pathInfo.ext !== '' ? pathInfo.ext : ''}`;
 
     const logger = childLogger(options.logger, [folderName, 'Files On Server']);
-    logger.info(`Found Stack '${folderName}' at dir ${path}`);
+    logger.verbose(`Found Stack '${folderName}' at dir ${path}`);
 
     let stack: TomlStack;
     let logJson = isDebugMode();

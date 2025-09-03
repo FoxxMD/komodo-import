@@ -19,10 +19,10 @@ export const selectComposeFiles = async (glob: string, path: string, logger: Log
     const composeFiles = await findFilesRecurive(glob, path);
     let sorted = [...composeFiles].reverse();
     if (composeFiles.length === 0) {
-        logger.warn(`Did not find any files patterns matching compose glob`);
+        logger.verbose(`Did not find any files patterns matching compose glob`);
     } else {
         sorted = sortComposePaths(composeFiles);
-        logger.info(stripIndents`Found ${composeFiles.length} files matching compose glob:
+        logger.verbose(stripIndents`Found ${composeFiles.length} files matching compose glob:
                 ${sorted.join('\n')}`);
 
         // only take first file if using default
@@ -34,10 +34,10 @@ export const selectComposeFiles = async (glob: string, path: string, logger: Log
         }
 
         if (file_paths.length === 1 && file_paths[0] === 'compose.yaml') {
-            logger.info(`Using file: compose.yaml but not writing to file_paths since this is the Komodo default`);
+            logger.debug(`Using file: compose.yaml but not writing to file_paths since this is the Komodo default`);
             return undefined;
         } else {
-            logger.info(`Using file(s): ${file_paths.join('\n')}`);
+            logger.verbose(`Using file(s): ${file_paths.join('\n')}`);
             return file_paths;
         }
     }
@@ -47,7 +47,7 @@ export const selectEnvFiles = async (glob: string, path: string, logger: Logger)
 
     const envFiles = await findFilesRecurive(glob, path, { dot: true });
     if (envFiles.length > 0) {
-        logger.info(stripIndents`Found ${envFiles.length} matching env files:
+        logger.verbose(stripIndents`Found ${envFiles.length} matching env files:
             ${envFiles.join('\n')}`);
         return envFiles;
     }
@@ -82,7 +82,7 @@ export const parseEnvConfig = async (path: string, options: ParseEnvOptions = {}
         }
         else {
             config.env_file_path = komodoEnvName
-            logger.info(`Using ${komodoEnvName} for Komodo-written env file`);
+            logger.verbose(`Using ${komodoEnvName} for Komodo-written env file`);
             config.additional_env_files = pathPrefix === undefined ? envFiles : envFiles.map(x => join(pathPrefix, x));
         }
     }

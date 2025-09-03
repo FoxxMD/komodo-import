@@ -43,7 +43,7 @@ export const buildGitStack = async (path: string, options: BuildGitStackOptions)
     let gitData: GitRepoData;
     try {
         gitData = await detectGitRepo(path);
-        logger.info(`Current directory is a Git repo: Branch ${gitData[0].branch} | Remote ${gitData[1].remote} | URL ${gitData[1].url}`);
+        logger.verbose(`Current directory is a Git repo: Branch ${gitData[0].branch} | Remote ${gitData[1].remote} | URL ${gitData[1].url}`);
     } catch (e) {
         if (e instanceof SimpleError) {
             nonGitReasons.push(`Current dir is not a git repo => ${e.message}`);
@@ -58,8 +58,8 @@ export const buildGitStack = async (path: string, options: BuildGitStackOptions)
             const parentGitDir = dirname(parentGitPath)
             try {
                 gitData = await detectGitRepo(parentGitDir);
-                logger.info(`Detected parent path ${parentGitDir} is a Git repo: Branch ${gitData[0].branch} | Remote ${gitData[1].remote} | URL ${gitData[1].url}`);
-                logger.info('Will treat current directory as the run directory for this repo');
+                logger.verbose(`Detected parent path ${parentGitDir} is a Git repo: Branch ${gitData[0].branch} | Remote ${gitData[1].remote} | URL ${gitData[1].url}`);
+                logger.debug('Will treat current directory as the run directory for this repo');
                 repoRunDir = removeRootPathSeparator(path.replace(parentGitDir, ''));
                 gitStackConfig.run_directory = repoRunDir;
             } catch (e) {
@@ -95,7 +95,7 @@ export const buildGitStack = async (path: string, options: BuildGitStackOptions)
             repo
         };
     } else {
-        logger.verbose(`Using linked repo ${repo.name}}`);
+        logger.debug(`Using linked repo ${repo.name}}`);
         gitStackConfig. linked_repo = repo.name;
     }
 

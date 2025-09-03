@@ -17,7 +17,7 @@ export const exportToSync = async (toml: string, parentLogger: Logger): Promise<
                 throw new Error('Komodo API is unavailable, cannot export to Sync');
             }
             const syncName = isUndefinedOrEmptyString(process.env.SYNC_NAME) ? 'komodo-import' : process.env.SYNC_NAME;
-            logger.info(`Using '${syncName}' as Sync Name`);
+            logger.verbose(`Using '${syncName}' as Sync Name`);
 
             let syncId: string;
             let existingBehaviorVal = process.env.EXISTING_SYNC ?? 'append';

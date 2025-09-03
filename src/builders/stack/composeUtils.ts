@@ -33,6 +33,6 @@ export const consolidateComposeStacks = (containers: Container[], parentLogger: 
         }
     }
     const s = Object.values(stacks);
-    logger.verbose(`Found ${s.length} candidate Compose projects`);
+    logger.debug(`Found ${s.length} candidate Compose projects`);
     return s;
 }
