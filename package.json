@@ -32,7 +32,7 @@
   "homepage": "https://github.com/FoxxMD/komodo-import#readme",
   "dependencies": {
     "@foxxmd/get-version": "^0.0.3",
-    "@foxxmd/logging": "^0.2.2",
+    "@foxxmd/logging": "^0.2.3",
     "@foxxmd/regex-buddy-core": "^0.1.2",
     "clone": "^2.1.2",
     "common-tags": "^1.8.2",
