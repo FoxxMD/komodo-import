@@ -30,6 +30,30 @@ Run the customized `compose.yaml` from above with `docker compose` to generate K
 docker compose up --no-log-prefix
 ```
 
+<details>
+
+<summary>Show Only Sync Resource Contents</summary>
+
+**Console** output too long? Run Komodo Import again with this command to output only the [Sync Resource](../usage/resourceSync) content:
+
+```bash
+docker compose up --no-log-prefix | grep -Pzo '(?s)✂️\n\K(.+)(?=\n✂)' && echo
+```
+
+</details>
+
+<details>
+
+<summary>Copy to Clipboard</summary>
+
+**Console** output too long to copy? Run Komodo Import again with this command to copy the [Sync Resource](../usage/resourceSync) content directly to clipboard with `xclip`:
+
+```bash
+docker compose up --no-log-prefix | grep -Pzo '(?s)✂️\n\K(.+)(?=\n✂)' | xclip -selection c
+```
+
+</details>
+
 How the Stacks will be generated is determined by what you chose in **Step 4**. Refer to the expandable **Examples** in that step.
 
 ## Next Steps

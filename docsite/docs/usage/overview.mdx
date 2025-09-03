@@ -428,6 +428,30 @@ docker compose up --no-log-prefix
 ```
 :::
 
+<details>
+
+<summary>Show Only Sync Resource Contents</summary>
+
+**Console** output too long? Run Komodo Import again with this command to output only the [Sync Resource](../usage/resourceSync) content:
+
+```bash
+docker compose up --no-log-prefix | grep -Pzo '(?s)✂️\n\K(.+)(?=\n✂)' && echo
+```
+
+</details>
+
+<details>
+
+<summary>Copy to Clipboard</summary>
+
+**Console** output too long to copy? Run Komodo Import again with this command to copy the [Sync Resource](../usage/resourceSync) content directly to clipboard with `xclip`:
+
+```bash
+docker compose up --no-log-prefix | grep -Pzo '(?s)✂️\n\K(.+)(?=\n✂)' | xclip -selection c
+```
+
+</details>
+
 ### API Sync
 
 Komodo Import can **directly create Sync Resources in Komodo** using Komodo's API. **This output will only create the Sync, it will not execute it.** After creating the Sync you should [verify its content before executing.](../resourceSync#verify-sync-changes)
