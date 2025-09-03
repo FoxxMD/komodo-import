@@ -44,9 +44,10 @@ export class KomodoApi {
             if (isUndefinedOrEmptyString(process.env.KOMODO_URL)) {
                 throw new SimpleError(`Cannot use Komodo API because env KOMODO_URL is missing`);
             }
-            this.logger.verbose(`KOMODO_URL: ${process.env.KOMODO_URL} | Normalized: ${this.urlData.url.toString()}`);
+            this.logger.verbose(`KOMODO_URL: ${process.env.KOMODO_URL} | Normalized: ${this.urlData.url.toString().replace(/\/$/, '')}`);
 
-            this.api = KomodoClient(this.urlData.url.toString(), {
+            // remove any trailing slash or calls may result in a 405
+            this.api = KomodoClient(this.urlData.url.toString().replace(/\/$/, ''), {
                 type: "api-key",
                 params: {
                     key: process.env.API_KEY,
