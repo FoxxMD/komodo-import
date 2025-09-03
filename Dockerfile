@@ -23,6 +23,9 @@ RUN npm install --omit=dev \
 
 FROM base as app
 
+ARG APP_BUILD_VERSION
+ENV APP_VERSION=$APP_BUILD_VERSION
+
 USER 1000
 
 WORKDIR /usr/src/app
