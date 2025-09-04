@@ -23,6 +23,8 @@ RUN npm install --omit=dev \
 
 FROM base as app
 
+RUN git config --global --add safe.directory /filesOnServer
+
 ARG APP_BUILD_VERSION
 ENV APP_VERSION=$APP_BUILD_VERSION
 
