@@ -23,12 +23,13 @@ RUN npm install --omit=dev \
 
 FROM base as app
 
-RUN git config --global --add safe.directory /filesOnServer
-
 ARG APP_BUILD_VERSION
 ENV APP_VERSION=$APP_BUILD_VERSION
 
 USER 1000
+
+# https://stackoverflow.com/a/78818156/1469797
+RUN git config --global --add safe.directory "/filesOnServer" && git config --global --add safe.directory "/filesOnServer/*"
 
 WORKDIR /usr/src/app
 
