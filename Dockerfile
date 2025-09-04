@@ -31,6 +31,9 @@ ENV APP_VERSION=$APP_BUILD_VERSION
 
 USER 1000
 
+# https://stackoverflow.com/a/78818156/1469797
+RUN git config --global --add safe.directory "/filesOnServer" && git config --global --add safe.directory "/filesOnServer/*"
+
 WORKDIR /usr/src/app
 
 COPY --chown=node:node --from=builder /usr/src/app /usr/src/app
