@@ -76,17 +76,18 @@ const QSCompose = (props) => {
         seq.add(stacksFromS);
     
         const serverS = new Scalar(`SERVER_NAME=${serverValue !== undefined && serverValue.trim() !== '' ? serverValue : 'my-cool-server'}`);
-        serverS.commentBefore = '# Name of Server for this machine, in Komodo'
+        serverS.commentBefore = '# Name of Server for this machine, in Komodo\nmask'
         seq.add(serverS);
         
         if(storageSyncApiVal) {
             const urlS = new Scalar(`KOMODO_URL=${komodoUrlValue === '' ? 'http://192.168.KOMOMDO.IP:8120' : komodoUrlValue}`);
             urlS.spaceBefore = true;
-            urlS.commentBefore = '# Configuration for interacting with Komodo API';
+            urlS.commentBefore = '# Configuration for interacting with Komodo API\nmask-start';
             seq.add(urlS);
             seq.add(`API_KEY=${apiKeyValue === '' ? 'K-3A6btIPZYeBu_EXAMPLE_KEY' : apiKeyValue}`);
             seq.add(`API_SECRET=${komodoSec === '' ? 'S-qnaXD1frutYlfC2ZYl_EXAMPLE_SECRET' : komodoSec}`);
             const syncS = new Scalar('OUTPUT_API_SYNC=true');
+            syncS.commentBefore = 'mask-end';
             syncS.comment = 'Create Sync Resource in Komodo'
             seq.add(syncS);
         }
@@ -119,7 +120,7 @@ const QSCompose = (props) => {
     
         }, [storageSyncApiVal, storageStacksFromVal, storageHostVal, serverValue, apiKeyValue, komodoSec, komodoUrlValue, setUserDoc]);
     
-        return <CodeBlock className="rr-block .rr-block" title="compose.yaml" language="yaml">{userDoc.toString()}</CodeBlock>;
+        return <CodeBlock title="compose.yaml" language="yaml">{userDoc.toString()}</CodeBlock>;
 
 }
 

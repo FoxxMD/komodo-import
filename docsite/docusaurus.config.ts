@@ -181,7 +181,14 @@ const config: Config = {
       prism: {
         theme: themes.themes.github,
         darkTheme: themes.themes.dracula,
-        additionalLanguages: ['json','json5','typescript', 'docker', 'bash', 'ini','yaml']
+        additionalLanguages: ['json','json5','typescript', 'docker', 'bash', 'ini','yaml'],
+        magicComments: [
+          {
+            line: 'mask',
+            className: 'rr-mask',
+            block: {start: 'mask-start', end: 'mask-end'}
+          }
+        ]
       },
       colorMode: {
         defaultMode: 'dark',

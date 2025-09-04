@@ -10,6 +10,7 @@ export interface LocalStorateTextProps {
     initialValue?: string
     placeholder?: string
     stylePreset?: 'inline' | 'bold'
+    sensitive?: boolean
 }
 
 export type FixedStorageProps = Omit<LocalStorateTextProps, 'storageKey'>;
@@ -21,7 +22,8 @@ const InternalLocalStorageText: FC<LocalStorateTextProps> = (props) => {
         stylePreset,
         placeholder,
         storageKey,
-        initialValue = ""
+        initialValue = "",
+        sensitive = false
     } = props
 
         const [storageVal, setStorageVal] = useTypedLocalStorage(storageKey, initialValue);
@@ -40,6 +42,8 @@ const InternalLocalStorageText: FC<LocalStorateTextProps> = (props) => {
             setInputValue(storageVal);
         }, [storageVal, setValue, setInputValue])
 
+        const sensitiveClass = sensitive ? 'rr-mask' : '';
+
         if(readOnly) {
             let roVal: string;
             if(storageVal !== undefined && storageVal !== null && storageVal.trim() !== '') {
@@ -49,17 +53,18 @@ const InternalLocalStorageText: FC<LocalStorateTextProps> = (props) => {
             } else if(placeholder !== undefined) {
                 roVal = placeholder;
             }
+
             switch(stylePreset) {
                 case 'inline':
-                    return <CodeInline>{roVal}</CodeInline>;
+                    return <CodeInline className={sensitiveClass}>{roVal}</CodeInline>;
                 case 'bold':
-                    return <strong>{roVal}</strong>;
+                    return <strong className={sensitiveClass}>{roVal}</strong>;
                 default:
-                    return <Fragment>{roVal}</Fragment>;
+                    return <span className={sensitiveClass}>{roVal}</span>;
             }
         }
 
-        return <input type="text" placeholder={placeholder} onChange={handleInputChange} value={inputValue}/>
+        return <input type="text" className={sensitiveClass} placeholder={placeholder} onChange={handleInputChange} value={inputValue}/>
 }
 
 export const LocalStorageText:  FC<LocalStorateTextProps> = (props) => {

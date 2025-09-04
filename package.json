@@ -13,7 +13,7 @@
     "build:parallel": "concurrently --kill-others-on-fail --names backend,frontend,docs \"npm run -s build:backend\" \"npm run -s build:frontend\" \"npm run docs:build\"",
     "docs:install": "cd docsite && npm ci --no-audit",
     "docs:start": "cd docsite && npm start",
-    "docs:build": "npm run schema && cd docsite && npm run build",
+    "docs:build": "cd docsite && npm run build",
     "demo": "HOST_PARENT_PATH=/my/cool/path SERVER_NAME=my-cool-server FILES_ON_SERVER_DIR=tests/exampleDir tsx src/index.ts"
   },
   "engines": {

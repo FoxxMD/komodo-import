@@ -8,7 +8,7 @@ export const ServerName: FC<FixedStorageProps> = (props) => {
         ...rest
     } = props
 
-        return <LocalStorageText storageKey="serverName" placeholder={placeholder} {...rest}/>;
+        return <LocalStorageText storageKey="serverName" placeholder={placeholder} sensitive {...rest}/>;
 }
 
 export const HostDirectory: FC<FixedStorageProps> = (props) => {
@@ -28,7 +28,7 @@ export const KomodoUrl: FC<FixedStorageProps> = (props) => {
         ...rest
     } = props
 
-        return <LocalStorageText storageKey="komodoUrl" placeholder={placeholder} {...rest}/>;
+        return <LocalStorageText storageKey="komodoUrl" sensitive placeholder={placeholder} {...rest}/>;
 }
 
 export const KomodoApiKey: FC<FixedStorageProps> = (props) => {
@@ -38,7 +38,7 @@ export const KomodoApiKey: FC<FixedStorageProps> = (props) => {
         ...rest
     } = props
 
-        return <LocalStorageText storageKey="komodoApiKey" placeholder={placeholder} {...rest}/>;
+        return <LocalStorageText storageKey="komodoApiKey" sensitive placeholder={placeholder} {...rest}/>;
 }
 
 export const KomodoApiSecret: FC<FixedStorageProps> = (props) => {
@@ -48,5 +48,5 @@ export const KomodoApiSecret: FC<FixedStorageProps> = (props) => {
         ...rest
     } = props
 
-        return <LocalStorageText storageKey="komodoApiSecret" placeholder={placeholder} {...rest}/>;
+        return <LocalStorageText storageKey="komodoApiSecret" sensitive placeholder={placeholder} {...rest}/>;
 }
