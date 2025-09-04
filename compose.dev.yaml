@@ -7,5 +7,5 @@ services:
         required: false
     volumes:
       ## ParentDirectory:FILES_ON_SERVER_DIR
-      - ./example:/filesOnServer
+      - ${HOST_DIR:-./example}:/filesOnServer
     restart: no
