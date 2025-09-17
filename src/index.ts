@@ -94,8 +94,7 @@ try {
     }
 
     const filesOnServerConfig: FilesOnServerConfig = {
-        ...importOptions,
-        hostParentPath: process.env.HOST_PARENT_PATH
+        ...importOptions
     };
 
     const stackBuilder = new StackBuilder(filesOnServerConfig, dirData[1], logger);

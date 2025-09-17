@@ -60,7 +60,7 @@ const QSCompose = (props) => {
         const seq = modifiedDoc.getIn(['services','komodo-import','environment']) as YAMLSeq;
     
     
-        const hostS = new Scalar(`HOST_PARENT_PATH=${hostPath}`);
+        const hostS = new Scalar(`HOST_DIR=${hostPath}`);
         hostS.commentBefore = `# Same as mounted directory above`
         seq.add(hostS);
     

@@ -14,7 +14,7 @@
     "docs:install": "cd docsite && npm ci --no-audit",
     "docs:start": "cd docsite && npm start",
     "docs:build": "cd docsite && npm run build",
-    "demo": "HOST_PARENT_PATH=/my/cool/path SERVER_NAME=my-cool-server FILES_ON_SERVER_DIR=tests/exampleDir tsx src/index.ts"
+    "demo": "HOST_DIR=/my/cool/path SERVER_NAME=my-cool-server FILES_ON_SERVER_DIR=tests/exampleDir tsx src/index.ts"
   },
   "engines": {
     "node": ">=18.19.1",
