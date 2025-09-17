@@ -13,3 +13,61 @@ If the [**Quickstart** guide](../quickstart) and [Usage docs](../usage/overview)
 ## Found a Bug or Error?
 
 If Komodo Import is not behaving as you expect it to or is outputting errors that break functionality please search [Github Issues](https://github.com/FoxxMD/komodo-import/issues) and [open a New Issue](https://github.com/FoxxMD/komodo-import/issues/new) if you cannot find a solution to your problem.
+
+## FAQ
+
+### How do I change/fix created Stacks? {#update-stacks}
+
+Komodo computes differences between what is described in a [Sync Resource](https://komo.do/docs/resources/sync-resources) and what is currently deployed in Komodo. With this ability, you can make changes to a Sync and **Execute** it to make Komodo automatically update the deployed Resource of the same name(s). This makes it easy to "fix" Stacks without having to start from scratch. The approaches below all describe ways to update your existing Sync Resource.
+
+#### Edit Manually
+
+If the change you want to make is small (only a few Stacks need to change) or is for a setting Komodo Import does not support yet, you can manually edit the **Resoure Files/Info** section of the Sync yourself. After **Saving**, **Execute** the Sync to make the changes propogate into Komodo.
+
+Or, alternatively, update the Stack directly.
+
+#### Bulk Update using Komodo Import
+
+##### Using API Output {#update-using-api-output}
+
+With [API Output](../usage/overview#api-sync), add this to your Komodo Import environment:
+
+```
+EXISTING_SYNC=overwrite
+```
+
+and re-run Komodo Import. This will make Komodo Import overwrite the contents of the existing Sync with the updated, generated Stacks. Then, [Verify and Execute Sync](http://localhost:3001/docs/usage/resourceSync/#verify-syn) as normal to make Komodo propogate the changes.
+
+##### Using Console Output {#update-using-console-output}
+
+With [Console Output](../usage/overview#console), copy the new output from Komodo Import and replace the contents of your existing Sync (in the **Resoure Files/Info** section). [Verify and Execute Sync](http://localhost:3001/docs/usage/resourceSync/#verify-syn) as normal to make Komodo propogate the changes.
+
+### How do I delete created Stacks?
+
+If you are trying to re-create the Stack with new settings because the existing ones are wrong try [change/fixing the stacks instead.](#update-stacks)
+
+The easiest way to delete stacks in bulk is from the Stacks list page in Komodo (Stacks in sidebar). Toggle the checkbox for all Stacks to delete and click **Group Actions** -> **Delete**.
+
+<details markdown="1">
+
+<summary>Using Sync Resource (Advanced)</summary>
+
+Stacks can also be deleted using a separate Sync Resource with **Delete Unmatched Resources** option enabled. This option will make Komodo delete any Resources **that are not described in the Sync Resource**.
+
+**Be careful with this method and double check the contents before using.** You could accidentially delete Servers (hosts connected with Periphery), Variables, etc... if they are not included.
+
+Steps:
+
+* Create a new Sync with **Managed** option enabled, if you don't already have one
+* Commit/Refresh the Sync so that the **Resoure Files/Info** section includes **ALL** Resources in Komodo.
+  * Verify this! It should include `[[server]]` sections and other Resources, besides just Stacks.
+* In **Resoure Files/Info** section remove all `[[stack]]`, with proceeding data, sections you want to delete. Then **Save**
+* In the config for the Sync enable **Delete Unmatched Resources** and **Save**
+* Switch to the **Execute** tab and **Execute Change** to delete all undesired Stacks
+
+At this point the Sync can be used as a "good rollback state" for Komodo like so:
+
+* Use Komodo Import to create Stacks in another Sync, Execute...stacks are created
+* Don't like how Stacks were created or something is wrong and can't use [update method](#update-stacks)? **Execute Change** on your "rollback state" Sync to one-click return Komodo to where it was before using Komodo Import.
+
+</details>
